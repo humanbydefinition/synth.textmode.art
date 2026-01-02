@@ -53,7 +53,7 @@ export function StatusIndicator({ status, className }: StatusIndicatorProps) {
         >
             <Icon
                 className={cn(
-                    'w-5 h-5 transition-colors duration-300',
+                    'w-[16px] h-[16px] transition-colors duration-300',
                     config.color,
                     config.animate && 'animate-pulse'
                 )}
