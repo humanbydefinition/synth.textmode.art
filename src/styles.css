@@ -1,16 +1,23 @@
-/* ===== RESET & BASE ===== */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@import "tailwindcss";
+@import "tw-animate-css";
 
-html, body {
+@custom-variant dark (&:is(.dark *));
+
+/* ===== RESET & BASE ===== */
+
+
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
   background: #000;
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* Force dark mode */
+html {
+  color-scheme: dark;
 }
 
 /* ===== IFRAME RUNNER (BACKGROUND) ===== */
@@ -24,7 +31,7 @@ html, body {
   z-index: 0;
 }
 
-/* ===== MONACO EDITOR OVERLAY ===== */
+/* ===== MONACO EDITOR CONTAINER ===== */
 #editor-container {
   position: fixed;
   top: 0;
@@ -33,168 +40,139 @@ html, body {
   height: 100%;
   z-index: 10;
   pointer-events: auto;
-}
-
-/* Monaco transparent background */
-.monaco-editor,
-.monaco-editor .margin,
-.monaco-editor-background,
-.monaco-editor .inputarea.ime-input {
+  /* Fully transparent - no background at all */
   background: transparent !important;
 }
 
-/* Subtle text shadow for readability */
-.monaco-editor .view-line span {
-  text-shadow: 
-    0 0 4px rgba(0, 0, 0, 0.9),
-    0 0 8px rgba(0, 0, 0, 0.7),
-    1px 1px 2px rgba(0, 0, 0, 0.8);
+/* ===== MONACO TRANSPARENT THEME ===== */
+.monaco-editor,
+.monaco-editor .margin,
+.monaco-editor-background,
+.monaco-editor .inputarea.ime-input,
+.monaco-editor .view-lines {
+  background: transparent !important;
+}
+
+/* Ensure view lines have no background */
+.monaco-editor .view-line {
+  background: transparent !important;
+}
+
+/* ===== TEXT-ONLY BACKGROUND EFFECT ===== */
+/* Apply dark background only to the text spans themselves */
+#editor-container.glass-effect .monaco-editor .view-line>span {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Without glass effect, use strong text shadows for readability */
+#editor-container:not(.glass-effect) .monaco-editor .view-line span {
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 1),
+    0 0 12px rgba(0, 0, 0, 0.95),
+    1px 1px 4px rgba(0, 0, 0, 1),
+    -1px -1px 4px rgba(0, 0, 0, 1),
+    2px 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+/* With glass effect, minimal shadow since background provides contrast */
+#editor-container.glass-effect .monaco-editor .view-line span {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* Selection visibility */
 .monaco-editor .selected-text {
-  background: rgba(100, 150, 255, 0.35) !important;
+  background: rgba(100, 150, 255, 0.4) !important;
 }
 
 /* Cursor visibility */
 .monaco-editor .cursor {
-  background: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
 }
 
-/* Scrollbar styling - minimal */
+/* Scrollbar styling - hidden */
 .monaco-editor .scrollbar {
+  opacity: 0;
+}
+
+.monaco-editor .scrollbar:hover {
   opacity: 0.3;
 }
-.monaco-editor .scrollbar:hover {
-  opacity: 0.5;
-}
 
-/* ===== ERROR OVERLAY ===== */
-#error-overlay {
+/* ===== REACT OVERLAY ROOT ===== */
+#overlay-root {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  max-width: 600px;
-  padding: 16px 20px;
-  background: rgba(40, 0, 0, 0.92);
-  border: 1px solid rgba(255, 80, 80, 0.5);
-  border-radius: 8px;
-  z-index: 100;
-  font-size: 13px;
-  color: #ff8888;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.2s, transform 0.2s;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  z-index: 100;
 }
 
-#error-overlay.visible {
-  opacity: 1;
-  transform: translateY(0);
+#overlay-root>* {
   pointer-events: auto;
 }
 
-#error-overlay .error-title {
-  font-weight: 600;
-  color: #ff6666;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* ===== SHADCN THEME VARIABLES ===== */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
-#error-overlay .error-message {
-  font-family: 'JetBrains Mono', 'Fira Code', monospace;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 200px;
-  overflow-y: auto;
-  color: #ffaaaa;
+/* Dark theme by default */
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.12 0.01 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.16 0.01 260);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.14 0.015 260);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.7 0.15 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.22 0.01 260);
+  --secondary-foreground: oklch(0.9 0 0);
+  --muted: oklch(0.25 0.01 260);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.28 0.02 260);
+  --accent-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.6 0.2 25);
+  --border: oklch(0.3 0.01 260);
+  --input: oklch(0.22 0.01 260);
+  --ring: oklch(0.6 0.15 250);
 }
 
-#error-overlay .error-actions {
-  margin-top: 12px;
-  display: flex;
-  gap: 10px;
-}
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
 
-#error-overlay button {
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 100, 100, 0.4);
-  background: rgba(255, 60, 60, 0.15);
-  color: #ff9999;
-  border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-#error-overlay button:hover {
-  background: rgba(255, 60, 60, 0.3);
-  border-color: rgba(255, 100, 100, 0.6);
-}
-
-/* ===== CONTROLS OVERLAY ===== */
-#controls {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 50;
-  display: flex;
-  gap: 8px;
-  opacity: 0.4;
-  transition: opacity 0.2s;
-}
-
-#controls:hover {
-  opacity: 1;
-}
-
-#controls button {
-  padding: 8px 14px;
-  background: rgba(30, 30, 40, 0.85);
-  border: 1px solid rgba(100, 100, 120, 0.4);
-  color: rgba(200, 200, 220, 0.9);
-  border-radius: 6px;
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: background 0.15s, border-color 0.15s;
-}
-
-#controls button:hover {
-  background: rgba(50, 50, 70, 0.9);
-  border-color: rgba(120, 120, 150, 0.6);
-}
-
-#controls button.active {
-  background: rgba(80, 100, 180, 0.6);
-  border-color: rgba(100, 120, 200, 0.7);
-}
-
-/* ===== STATUS INDICATOR ===== */
-#status {
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  padding: 6px 12px;
-  background: rgba(20, 20, 30, 0.8);
-  border-radius: 4px;
-  font-size: 11px;
-  color: rgba(150, 150, 170, 0.8);
-  z-index: 50;
-  backdrop-filter: blur(4px);
-}
-
-#status.running {
-  color: rgba(100, 200, 150, 0.9);
-}
-
-#status.error {
-  color: rgba(255, 120, 120, 0.9);
+  body {
+    @apply bg-background text-foreground;
+  }
 }

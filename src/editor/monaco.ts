@@ -43,7 +43,7 @@ function defineTransparentTheme(): void {
         base: 'vs-dark',
         inherit: true,
         rules: [
-            { token: '', foreground: 'e0e0e0' },
+            { token: '', foreground: 'e8e8e8' },
             { token: 'comment', foreground: '6a9955', fontStyle: 'italic' },
             { token: 'keyword', foreground: 'c586c0' },
             { token: 'string', foreground: 'ce9178' },
@@ -55,23 +55,24 @@ function defineTransparentTheme(): void {
         ],
         colors: {
             'editor.background': '#00000000',
-            'editor.foreground': '#e0e0e0',
-            'editor.lineHighlightBackground': '#ffffff08',
-            'editor.selectionBackground': '#4488ff40',
-            'editor.inactiveSelectionBackground': '#4488ff20',
+            'editor.foreground': '#e8e8e8',
+            'editor.lineHighlightBackground': '#ffffff06',
+            'editor.selectionBackground': '#4488ff35',
+            'editor.inactiveSelectionBackground': '#4488ff18',
             'editorCursor.foreground': '#ffffff',
             'editorWhitespace.foreground': '#404040',
             'editorIndentGuide.background': '#303030',
-            'editorLineNumber.foreground': '#606060',
-            'editorLineNumber.activeForeground': '#909090',
+            'editorLineNumber.foreground': '#505050',
+            'editorLineNumber.activeForeground': '#808080',
             'editorGutter.background': '#00000000',
-            'editorWidget.background': '#1e1e2e',
-            'editorWidget.border': '#404060',
-            'editorSuggestWidget.background': '#1e1e2eee',
-            'editorSuggestWidget.border': '#404060',
-            'editorSuggestWidget.selectedBackground': '#404060',
-            'editorHoverWidget.background': '#1e1e2eee',
-            'editorHoverWidget.border': '#404060',
+            'editorWidget.background': '#1a1a24ee',
+            'editorWidget.border': '#3a3a50',
+            'editorSuggestWidget.background': '#1a1a24f5',
+            'editorSuggestWidget.border': '#3a3a50',
+            'editorSuggestWidget.selectedBackground': '#3a3a50',
+            'editorSuggestWidget.highlightForeground': '#80b0ff',
+            'editorHoverWidget.background': '#1a1a24f5',
+            'editorHoverWidget.border': '#3a3a50',
         },
     });
 }
@@ -102,7 +103,7 @@ function configureTypeScript(): void {
     });
 
     // Add type definitions
-    tsDefaults.addExtraLib(textmodeTypes, 'ts:textmode.d.ts');
+    tsDefaults.addExtraLib(textmodeTypes, 'ts:textmode-globals.d.ts');
 }
 
 /**
@@ -145,7 +146,7 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
         wordWrap: 'on',
 
         // Padding for visual breathing room
-        padding: { top: 40, bottom: 40 },
+        padding: { top: 60, bottom: 80 },
 
         // Suggestions
         quickSuggestions: true,

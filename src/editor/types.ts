@@ -1,6 +1,11 @@
 /**
  * TypeScript definitions for Monaco IntelliSense
- * These provide autocomplete for t, synth functions, and tracked utilities
+ * Provides comprehensive type definitions for the live coding environment
+ */
+
+/**
+ * Complete type definitions for textmode.js and textmode.synth.js globals
+ * These enable IntelliSense for t.fontSize(), synth chains, etc.
  */
 export const textmodeTypes = `
 // Textmode.js types for live coding
@@ -12,6 +17,8 @@ interface TextmodeLayer {
   synth(chain: SynthChain): void;
   /** Set text content */
   text(content: string, x?: number, y?: number): void;
+  /** Fill the layer with a character */
+  fill(char: string): void;
 }
 
 interface TextmodeLayers {
@@ -29,7 +36,7 @@ interface Textmode {
   /** Layer management */
   layers: TextmodeLayers;
   /** Resize the canvas */
-  resizeCanvas(width: number, height: number): void;
+  resizeCanvas(width: number, height: number): this;
   /** Get current width */
   width: number;
   /** Get current height */
@@ -42,6 +49,26 @@ interface Textmode {
   stop(): void;
   /** Render a single frame */
   render(): void;
+  
+  // Configuration methods (chainable)
+  /** Set font size */
+  fontSize(size: number): this;
+  /** Set font family */
+  fontFamily(family: string): this;
+  /** Set cell size */
+  cellSize(width: number, height: number): this;
+  /** Set cell width */
+  cellWidth(width: number): this;
+  /** Set cell height */
+  cellHeight(height: number): this;
+  /** Set character set */
+  charset(chars: string): this;
+  /** Set default character */
+  defaultChar(char: string): this;
+  /** Set background color */
+  background(color: string): this;
+  /** Set foreground color */
+  foreground(color: string): this;
 }
 
 /** The textmode instance - use this to control rendering */
