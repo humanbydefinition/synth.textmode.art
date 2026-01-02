@@ -146,6 +146,9 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
             horizontal: 'hidden',
             useShadows: false,
         },
+        stickyScroll: {
+            enabled: false,
+        },
 
         // Editor behavior
         automaticLayout: true,
