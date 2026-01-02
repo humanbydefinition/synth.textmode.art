@@ -28,11 +28,12 @@ export interface RunCodeMessage {
     code: string;
 }
 
-export interface HardResetMessage {
-    type: 'HARD_RESET';
+export interface SoftResetMessage {
+    type: 'SOFT_RESET';
+    code: string;
 }
 
-export type ParentToRunnerMessage = RunCodeMessage | HardResetMessage;
+export type ParentToRunnerMessage = RunCodeMessage | SoftResetMessage;
 
 // Union of all messages
 export type Message = RunnerToParentMessage | ParentToRunnerMessage;

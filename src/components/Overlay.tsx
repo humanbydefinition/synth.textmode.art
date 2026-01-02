@@ -6,22 +6,24 @@ interface OverlayProps {
     status: StatusState;
     settings: AppSettings;
     error: ErrorInfo | null;
+    hasLastWorking: boolean;
     onSettingsChange: (settings: AppSettings) => void;
     onShare: () => void;
     onClearStorage: () => void;
     onDismissError: () => void;
-    onHardReset: () => void;
+    onRevertToLastWorking: () => void;
 }
 
 export function Overlay({
     status,
     settings,
     error,
+    hasLastWorking,
     onSettingsChange,
     onShare,
     onClearStorage,
     onDismissError,
-    onHardReset,
+    onRevertToLastWorking,
 }: OverlayProps) {
     return (
         <>
@@ -34,8 +36,9 @@ export function Overlay({
             <StatusIndicator status={status} />
             <ErrorOverlay
                 error={error}
+                hasLastWorking={hasLastWorking}
                 onDismiss={onDismissError}
-                onHardReset={onHardReset}
+                onRevert={onRevertToLastWorking}
             />
         </>
     );

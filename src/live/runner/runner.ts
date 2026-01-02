@@ -232,9 +232,12 @@ function handleMessage(event: MessageEvent<ParentToRunnerMessage>): void {
         case 'RUN_CODE':
             executeCode(msg.code);
             break;
-        case 'HARD_RESET':
-            // Reload the iframe
-            window.location.reload();
+        case 'SOFT_RESET':
+            // Reset frameCount to 0 and re-run code
+            if (t) {
+                (t as unknown as { frameCount: number }).frameCount = 0;
+            }
+            executeCode(msg.code);
             break;
     }
 }

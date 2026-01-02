@@ -23,7 +23,7 @@ export interface MonacoEditorOptions {
     initialValue: string;
     onChange?: (value: string) => void;
     onRun?: () => void;
-    onHardReload?: () => void;
+    onSoftReset?: () => void;
 }
 
 export interface MonacoEditorInstance {
@@ -165,9 +165,9 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
         options.onRun?.();
     });
 
-    // Ctrl/Cmd + Shift + R: Hard reload
+    // Ctrl/Cmd + Shift + R: Soft reset (reset frameCount)
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyR, () => {
-        options.onHardReload?.();
+        options.onSoftReset?.();
     });
 
     // Listen for changes

@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 export interface AppSettings {
     autoExecute: boolean;
@@ -43,10 +44,20 @@ export function SettingsDialog({
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <button
-                    className="fixed top-2 right-2 z-50 flex items-center justify-center w-6 h-6 rounded-xl bg-black/40 backdrop-blur-xl border border-white/[0.08] text-white/60 hover:text-white hover:bg-white/[0.08] hover:border-white/[0.15] transition-all duration-200 shadow-lg shadow-black/20"
+                    className={cn(
+                        'fixed top-2 right-2 z-50',
+                        'flex items-center justify-center',
+                        'w-6 h-6 rounded-full',
+                        'bg-zinc-500/20 backdrop-blur-md',
+                        'border border-white/10',
+                        'text-zinc-400',
+                        'transition-all duration-300',
+                        'hover:scale-110 hover:border-white/20 hover:text-white',
+                        'focus:outline-none focus:ring-2 focus:ring-white/20'
+                    )}
                     aria-label="Settings"
                 >
-                    <Settings className="w-[16px] h-[16px]" />
+                    <Settings className="w-[14px] h-[14px]" />
                 </button>
             </DialogTrigger>
 
@@ -134,7 +145,7 @@ export function SettingsDialog({
                         {copied ? (
                             <>
                                 <Check className="w-4 h-4 text-emerald-400" />
-                                <span className="text-emerald-400">Copied to clipboard!</span>
+                                <span className="text-emerald-400">copied to clipboard!</span>
                             </>
                         ) : (
                             <>

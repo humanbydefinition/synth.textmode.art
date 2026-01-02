@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { X, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -11,15 +11,17 @@ export interface ErrorInfo {
 
 interface ErrorOverlayProps {
     error: ErrorInfo | null;
+    hasLastWorking: boolean;
     onDismiss: () => void;
-    onHardReset: () => void;
+    onRevert: () => void;
     className?: string;
 }
 
 export function ErrorOverlay({
     error,
+    hasLastWorking,
     onDismiss,
-    onHardReset,
+    onRevert,
     className,
 }: ErrorOverlayProps) {
     if (!error) return null;
@@ -75,14 +77,17 @@ export function ErrorOverlay({
                 >
                     dismiss
                 </Button>
-                <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-300 border-red-500/30 hover:bg-red-500/20"
-                    onClick={onHardReset}
-                >
-                    hard reset
-                </Button>
+                {hasLastWorking && (
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 hover:text-emerald-200"
+                        onClick={onRevert}
+                    >
+                        <Undo2 className="w-3.5 h-3.5 mr-1.5" />
+                        revert
+                    </Button>
+                )}
             </div>
         </div>
     );

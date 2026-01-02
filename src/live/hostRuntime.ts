@@ -150,13 +150,18 @@ export class HostRuntime {
     }
 
     /**
-     * Hard reload - destroy and recreate iframe
+     * Soft reset - reset frameCount to 0 and re-run code
      */
-    hardReload(code?: string): void {
-        if (code !== undefined) {
-            this.pendingCode = code;
+    softReset(code: string): void {
+        if (this.debounceTimer !== null) {
+            clearTimeout(this.debounceTimer);
+            this.debounceTimer = null;
         }
-        this.createIframe();
+        if (!this.isReady) {
+            this.pendingCode = code;
+            return;
+        }
+        this.sendMessage({ type: 'SOFT_RESET', code });
     }
 
     /**

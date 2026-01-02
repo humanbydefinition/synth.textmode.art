@@ -27,6 +27,7 @@ export class App {
     private status: StatusState = 'ready';
     private error: ErrorInfo | null = null;
     private settings: AppSettings = DEFAULT_SETTINGS;
+    private lastWorkingCode: string | null = null;
 
     /**
      * Initialize the application
@@ -58,7 +59,7 @@ export class App {
             initialValue: initialCode,
             onChange: (value) => this.handleCodeChange(value),
             onRun: () => this.handleForceRun(),
-            onHardReload: () => this.handleHardReload(),
+            onSoftReset: () => this.handleSoftReset(),
         });
 
         // Create iframe runtime
@@ -87,11 +88,12 @@ export class App {
                 status: this.status,
                 settings: this.settings,
                 error: this.error,
+                hasLastWorking: this.lastWorkingCode !== null,
                 onSettingsChange: (settings) => this.handleSettingsChange(settings),
                 onShare: () => this.handleShare(),
                 onClearStorage: () => this.handleClearStorage(),
                 onDismissError: () => this.handleDismissError(),
-                onHardReset: () => this.handleHardReload(),
+                onRevertToLastWorking: () => this.handleRevertToLastWorking(),
             })
         );
     }
@@ -161,15 +163,29 @@ export class App {
     }
 
     /**
-     * Handle hard reload (Ctrl+Shift+R)
+     * Handle soft reset (Ctrl+Shift+R) - resets frameCount to 0 and re-runs code
      */
-    private handleHardReload(): void {
+    private handleSoftReset(): void {
         const code = this.editor?.getValue() ?? '';
         this.saveCode(code);
         this.error = null;
         this.status = 'ready';
         this.editor?.clearMarkers();
-        this.runtime?.hardReload(code);
+        this.runtime?.softReset(code);
+        this.renderOverlay();
+    }
+
+    /**
+     * Handle revert to last working code
+     */
+    private handleRevertToLastWorking(): void {
+        if (!this.lastWorkingCode) return;
+
+        this.editor?.setValue(this.lastWorkingCode);
+        this.saveCode(this.lastWorkingCode);
+        this.error = null;
+        this.editor?.clearMarkers();
+        this.runtime?.forceRun(this.lastWorkingCode);
         this.renderOverlay();
     }
 
@@ -209,8 +225,9 @@ export class App {
      */
     private handleClearStorage(): void {
         localStorage.removeItem(CODE_STORAGE_KEY);
+        this.lastWorkingCode = null;
         this.editor?.setValue(exampleSketch);
-        this.handleHardReload();
+        this.handleSoftReset();
     }
 
     /**
@@ -234,6 +251,10 @@ export class App {
      * Handle successful code execution
      */
     private handleRunOk(): void {
+        // Store the current code as last working
+        const code = this.editor?.getValue() ?? '';
+        this.lastWorkingCode = code;
+
         this.status = 'running';
         this.error = null;
         this.editor?.clearMarkers();
