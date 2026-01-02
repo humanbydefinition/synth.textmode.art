@@ -2,7 +2,7 @@
  * Monaco Editor setup with transparent theme and keybindings
  */
 import * as monaco from 'monaco-editor';
-import { textmodeTypes } from './types';
+import { typeDefinitions } from './types';
 
 // Import Monaco workers
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
@@ -80,6 +80,7 @@ function defineTransparentTheme(): void {
 /**
  * Configure TypeScript defaults for the editor
  */
+// Configure TypeScript defaults for the editor
 function configureTypeScript(): void {
     const tsDefaults = monaco.languages.typescript.javascriptDefaults;
 
@@ -94,6 +95,13 @@ function configureTypeScript(): void {
         strict: false,
         allowJs: true,
         lib: ['es2020', 'dom'],
+
+        // Critical for library resolution
+        baseUrl: '.',
+        paths: {
+            "textmode.js": ["file:///node_modules/textmode.js/dist/types/index.d.ts"],
+            "textmode.synth.js": ["file:///node_modules/textmode.synth.js/dist/types/index.d.ts"]
+        }
     });
 
     // Diagnostic options
@@ -102,8 +110,11 @@ function configureTypeScript(): void {
         noSyntaxValidation: false,
     });
 
-    // Add type definitions
-    tsDefaults.addExtraLib(textmodeTypes, 'ts:textmode-globals.d.ts');
+    // Load all captured type files
+    // The typeDefinitions object contains a map of "file:///..." -> "content"
+    for (const [path, content] of Object.entries(typeDefinitions)) {
+        tsDefaults.addExtraLib(content, path);
+    }
 }
 
 /**
