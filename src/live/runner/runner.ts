@@ -13,6 +13,7 @@ import {
     shape,
     char,
 } from 'textmode.synth.js';
+import { createFiltersPlugin } from 'textmode.filters.js'
 import { ScopeTracker } from './scope';
 import type { RunnerToParentMessage, ParentToRunnerMessage } from '../protocol';
 
@@ -30,7 +31,7 @@ function initTextmode(): void {
     t = textmode.create({
         width: window.innerWidth,
         height: window.innerHeight,
-        plugins: [SynthPlugin],
+        plugins: [SynthPlugin, createFiltersPlugin()],
     });
 
     document.body.appendChild(t.canvas);
