@@ -44,7 +44,7 @@ export function SystemMenu({
                     className={cn(
                         'fixed top-2 right-2 z-50',
                         'flex items-center justify-center',
-                        'w-8 h-8 rounded-full',
+                        'w-6 h-6 rounded-full',
                         'bg-zinc-900/40 backdrop-blur-md',
                         'border border-white/5',
                         'text-zinc-400',
@@ -54,7 +54,7 @@ export function SystemMenu({
                     )}
                     aria-label="System Menu"
                 >
-                    <Menu className="w-5 h-5" />
+                    <Menu className="w-[14px] h-[14px]" />
                 </button>
             </DialogTrigger>
 

@@ -24,7 +24,18 @@ export function ShortcutsTab() {
                 { keys: ["Ctrl", "+"], description: "increase font size" },
                 { keys: ["Ctrl", "-"], description: "decrease font size" },
                 { keys: ["Ctrl", "B"], description: "toggle text background" },
-                { keys: ["Ctrl", "H"], description: "hide / show ui" },
+                { keys: ["Ctrl", "Shift", "H"], description: "hide / show ui" },
+            ]
+        },
+        {
+            title: "Navigation & Editing",
+            shortcuts: [
+                { keys: ["Ctrl", "F"], description: "find" },
+                { keys: ["Ctrl", "H"], description: "replace" },
+                { keys: ["Ctrl", "Z"], description: "undo" },
+                { keys: ["Ctrl", "Y"], description: "redo" },
+                { keys: ["Ctrl", "/"], description: "toggle comment" },
+                { keys: ["Alt", "Click"], description: "add multi-cursor" },
             ]
         },
         {

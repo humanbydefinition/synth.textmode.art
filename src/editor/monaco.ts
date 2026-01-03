@@ -191,8 +191,8 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
         options.onSoftReset?.();
     });
 
-    // Ctrl+H: Toggle UI visibility
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
+    // Ctrl+Shift+H: Toggle UI visibility
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyH, () => {
         options.onToggleUI?.();
     });
 

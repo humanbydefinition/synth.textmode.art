@@ -348,8 +348,8 @@ export class App {
                 this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect });
             }
 
-            // Toggle UI visibility: Ctrl + H
-            if (e.ctrlKey && e.key === 'h') {
+            // Toggle UI visibility: Ctrl + Shift + H
+            if (e.ctrlKey && e.shiftKey && e.key === 'H') {
                 e.preventDefault();
                 this.toggleUIVisibility();
             }
