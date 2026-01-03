@@ -25,9 +25,11 @@ import type { RunnerToParentMessage, ParentToRunnerMessage } from '../protocol';
 let t: ReturnType<typeof textmode.create> | null = null;
 let currentScope: ScopeTracker | null = null;
 let userDispose: (() => void) | null = null;
-let lastWorkingCode: string | null = null;
-let isRecovering = false;
-let currentCode: string | null = null;
+
+// Frame synchronization state
+let pendingExecution: { code: string; isSoftReset: boolean } | null = null;
+let executionGeneration = 0; // Incremented for each new execution request to cancel stale RAFs
+let drawErrorOccurred = false;
 
 /**
  * Initialize the textmode instance
@@ -168,35 +170,202 @@ function reportError(error: Error | string | Event) {
 }
 
 /**
- * Attempt to revert to last working code
+ * Validate code syntax without executing it
  */
-function attemptRevert() {
-    if (isRecovering) return; // Prevent infinite recursion
-    if (!lastWorkingCode) return; // No code to revert to
-    if (currentCode === lastWorkingCode) return; // Already on last working code, nothing we can do
-
-    console.log('Reverting to last working code due to error...');
-    isRecovering = true;
-
-    // We want to run the old code, but keep the error state reported to the user
-    // The parent will show the red error marker, but the visual will revert to the last working state
+function validateCode(code: string): { valid: boolean; error?: Error } {
     try {
-        // Run the last working code without updating currentCode to it initially
-        // so if IT fails, we don't loop. Actually, executeCode updates currentCode.
-        executeCode(lastWorkingCode, true);
-    } catch (e) {
-        console.error('Failed to revert to last working code:', e);
-    } finally {
-        isRecovering = false;
+        new Function(code);
+        return { valid: true };
+    } catch (error) {
+        return { valid: false, error: error as Error };
     }
 }
 
 /**
- * Execute user code
+ * Wrap a draw callback to catch errors without crashing
  */
-function executeCode(code: string, isRevert: boolean = false): void {
-    // If we are recovering, we don't want to dispose the current (broken) state if it's already broken?
-    // No, we always want a clean slate for the new run.
+function wrapDrawCallback(callback: () => void): () => void {
+    return () => {
+        if (drawErrorOccurred) return; // Skip if in error state
+        try {
+            callback();
+        } catch (error) {
+            drawErrorOccurred = true;
+            reportError(error as Error);
+            // Don't crash - just freeze on last good frame
+        }
+    };
+}
+
+/**
+ * Create a proxy for textmode that wraps draw callbacks
+ */
+function createSafeTextmodeProxy(original: NonNullable<typeof t>): NonNullable<typeof t> {
+    return new Proxy(original, {
+        get(target, prop) {
+            const value = (target as Record<string | symbol, unknown>)[prop];
+
+            if (prop === 'draw') {
+                return (callback: () => void) => target.draw(wrapDrawCallback(callback));
+            }
+
+            if (prop === 'layers') {
+                return createLayerManagerProxy(target.layers);
+            }
+
+            return value;
+        }
+    });
+}
+
+/**
+ * Create a proxy for layer manager that wraps layer.draw() calls
+ */
+function createLayerManagerProxy(layers: NonNullable<typeof t>['layers']) {
+    return new Proxy(layers, {
+        get(target, prop) {
+            const value = (target as Record<string | symbol, unknown>)[prop];
+
+            if (prop === 'base') {
+                return createLayerProxy(target.base);
+            }
+
+            if (prop === 'add') {
+                return (options?: Parameters<typeof target.add>[0]) => {
+                    const layer = target.add(options);
+                    return createLayerProxy(layer);
+                };
+            }
+
+            if (prop === 'all') {
+                return (target.all as Array<typeof target.base>).map(layer => createLayerProxy(layer));
+            }
+
+            return value;
+        }
+    });
+}
+
+/**
+ * Create a proxy for a single layer that wraps its draw callback
+ */
+function createLayerProxy(layer: NonNullable<typeof t>['layers']['base']) {
+    return new Proxy(layer, {
+        get(target, prop) {
+            const value = (target as Record<string | symbol, unknown>)[prop];
+
+            if (prop === 'draw') {
+                return (callback: () => void) => target.draw(wrapDrawCallback(callback));
+            }
+
+            if (typeof value === 'function') {
+                return value.bind(target);
+            }
+
+            return value;
+        }
+    });
+}
+
+/**
+ * Process pending execution when frame is safe
+ */
+function processPendingExecution(): void {
+    if (!pendingExecution) return;
+
+    // Double-check we're not mid-render
+    if (t?.isRenderingFrame) {
+        // Still rendering, try again next frame
+        requestAnimationFrame(() => processPendingExecution());
+        return;
+    }
+
+    const { code, isSoftReset } = pendingExecution;
+    pendingExecution = null;
+    executeCodeInternal(code, isSoftReset);
+}
+
+/**
+ * Schedule execution at the safest possible moment - the start of a frame
+ * before any rendering has begun. Uses double-RAF to ensure we catch the
+ * very beginning of a frame.
+ */
+function scheduleFrameSafeExecution(code: string, isSoftReset: boolean): void {
+    // Increment generation to invalidate any pending RAF chains
+    const thisGeneration = ++executionGeneration;
+    pendingExecution = { code, isSoftReset };
+
+    // First RAF: wait for current frame to complete its callback phase
+    requestAnimationFrame(() => {
+        // Check if this execution was superseded by a newer one
+        if (thisGeneration !== executionGeneration) return;
+
+        // Second RAF: now we're at the very start of the next frame,
+        // before textmode's render loop has been called
+        requestAnimationFrame(() => {
+            // Check again in case a newer execution was scheduled
+            if (thisGeneration !== executionGeneration) return;
+
+            processPendingExecution();
+        });
+    });
+}
+
+/**
+ * Safe entry point that validates code and ensures frame-safe execution
+ */
+function safeExecuteCode(code: string, isSoftReset: boolean = false): void {
+    // Validate syntax first - reject broken code immediately
+    const validation = validateCode(code);
+    if (!validation.valid) {
+        reportError(validation.error!);
+        return; // Keep current code running
+    }
+
+    // Always schedule for next safe frame boundary to avoid any timing issues
+    // The double-RAF pattern ensures we execute before textmode's render loop
+    scheduleFrameSafeExecution(code, isSoftReset);
+}
+
+/**
+ * Internal code execution (called after validation and frame-sync)
+ */
+function executeCodeInternal(code: string, isSoftReset: boolean): void {
+    // Reset draw error state for new execution
+    drawErrorOccurred = false;
+
+    if (t) {
+        // CRITICAL: Pause the animation loop before any cleanup
+        // This prevents the render loop from running while we dispose layers
+        t.noLoop();
+
+        try {
+            // Clear base layer's draw callback first to prevent stale references
+            t.layers.base.draw(() => { });
+
+            // Clear draw callbacks on all user layers before clearing them
+            t.layers.all.forEach(layer => {
+                layer.draw(() => { });
+            });
+
+            t.layers.clear();
+
+            // For soft reset, also reset frame count
+            if (isSoftReset) {
+                t.frameCount = 0;
+                t.secs = 0;
+
+                // Clear synth on base layer (always, since we're re-running code)
+                t.layers.base.clearSynth();
+
+                t.layers.all.forEach(layer => {
+                    (layer as unknown as { clearSynth(): void }).clearSynth();
+                });
+            }
+        } catch (e) {
+            console.warn('Error during layer cleanup:', e);
+        }
+    }
 
     // Dispose previous execution resources
     if (userDispose) {
@@ -216,10 +385,13 @@ function executeCode(code: string, isRevert: boolean = false): void {
     currentScope = new ScopeTracker();
     const trackedGlobals = createTrackedGlobals(currentScope);
 
+    // Create safe proxy for textmode that wraps draw callbacks
+    const safeT = t ? createSafeTextmodeProxy(t) : null;
+
     // Prepare globals object
     const globals: Record<string, unknown> = {
-        // Textmode instance
-        t,
+        // Textmode instance (proxied for safe draw callbacks)
+        t: safeT,
         // Synth exports
         src,
         osc,
@@ -258,8 +430,6 @@ function executeCode(code: string, isRevert: boolean = false): void {
     const globalKeys = Object.keys(globals);
     const globalValues = Object.values(globals);
 
-    currentCode = code;
-
     try {
         // Create function from code
         const fn = new Function(...globalKeys, `"use strict";\n${code}`);
@@ -272,19 +442,17 @@ function executeCode(code: string, isRevert: boolean = false): void {
             userDispose = result;
         }
 
-        if (!isRevert) {
-            // Only update last working code if this wasn't a revert action
-            // AND we successfully executed safely (synchronously at least)
-            lastWorkingCode = code;
-            sendMessage({ type: 'RUN_OK', timestamp: Date.now() });
-        }
+        // Report success
+        sendMessage({ type: 'RUN_OK', timestamp: Date.now() });
 
     } catch (error) {
         reportError(error as Error);
-
-        // If this failed synchronously, try to revert immediately
-        if (!isRevert) {
-            attemptRevert();
+        // Error reported, but keep previous working state running
+    } finally {
+        // CRITICAL: Resume the animation loop after code execution
+        // This must always run, even if code execution fails
+        if (t) {
+            t.loop();
         }
     }
 }
@@ -298,25 +466,10 @@ function handleMessage(event: MessageEvent<ParentToRunnerMessage>): void {
 
     switch (msg.type) {
         case 'RUN_CODE':
-            if (t) {
-                t.layers.all.forEach(layer => layer.draw(() => { }));
-                t.layers.clear();
-            }
-            executeCode(msg.code);
+            safeExecuteCode(msg.code, false);
             break;
         case 'SOFT_RESET':
-            // Reset frameCount to 0 and re-run code
-            if (t) {
-                t.frameCount = 0;
-                if (t) {
-                    t.layers.all.forEach(layer => layer.draw(() => { }));
-                    t.layers.clear();
-                }
-                // Call `clearSynth` on all layers individually
-                t.layers.base.clearSynth();
-                t.layers.all.forEach(layer => layer.clearSynth());
-            }
-            executeCode(msg.code);
+            safeExecuteCode(msg.code, true);
             break;
     }
 }
@@ -327,12 +480,12 @@ function handleMessage(event: MessageEvent<ParentToRunnerMessage>): void {
 function setupErrorHandlers() {
     window.addEventListener('error', (event) => {
         reportError(event.error || event.message);
-        attemptRevert();
+        drawErrorOccurred = true; // Freeze frame on error
     });
 
     window.addEventListener('unhandledrejection', (event) => {
         reportError(event.reason);
-        attemptRevert();
+        drawErrorOccurred = true; // Freeze frame on error
     });
 }
 
