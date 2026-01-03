@@ -15,6 +15,8 @@ const SETTINGS_STORAGE_KEY = 'textmode_live_settings';
 const DEFAULT_SETTINGS: AppSettings = {
     autoExecute: true,
     glassEffect: true,
+    fontSize: 16,
+    uiVisible: true,
 };
 
 export class App {
@@ -44,6 +46,9 @@ export class App {
         }
         document.body.appendChild(this.editorContainer);
 
+        // Setup mobile touch handling for pinch-to-zoom
+        this.setupMobileTouchHandling();
+
         // Create React overlay root
         const overlayRootEl = document.createElement('div');
         overlayRootEl.id = 'overlay-root';
@@ -60,6 +65,12 @@ export class App {
             onChange: (value) => this.handleCodeChange(value),
             onRun: () => this.handleForceRun(),
             onSoftReset: () => this.handleSoftReset(),
+            onToggleUI: () => this.toggleUIVisibility(),
+            onToggleTextBackground: () => this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect }),
+            onToggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
+            onIncreaseFontSize: () => this.handleFontSizeChange(1),
+            onDecreaseFontSize: () => this.handleFontSizeChange(-1),
+            fontSize: this.settings.fontSize,
         });
 
         // Create iframe runtime
@@ -75,6 +86,9 @@ export class App {
 
         // Initialize runtime
         this.runtime.init();
+
+        // Setup shortcuts
+        this.setupGlobalShortcuts();
     }
 
     /**
@@ -92,6 +106,7 @@ export class App {
                 onSettingsChange: (settings) => this.handleSettingsChange(settings),
                 onShare: () => this.handleShare(),
                 onClearStorage: () => this.handleClearStorage(),
+                onLoadExample: (code) => this.handleLoadExample(code),
                 onDismissError: () => this.handleDismissError(),
                 onRevertToLastWorking: () => this.handleRevertToLastWorking(),
             })
@@ -205,6 +220,11 @@ export class App {
             }
         }
 
+        // Apply font size
+        if (this.editor) {
+            this.editor.updateOptions({ fontSize: settings.fontSize });
+        }
+
         this.renderOverlay();
     }
 
@@ -231,6 +251,18 @@ export class App {
     }
 
     /**
+     * Handle loading an example sketch
+     */
+    private handleLoadExample(code: string): void {
+        this.editor?.setValue(code);
+        this.saveCode(code);
+        this.error = null;
+        this.editor?.clearMarkers();
+        this.runtime?.forceRun(code);
+        this.renderOverlay();
+    }
+
+    /**
      * Handle dismiss error
      */
     private handleDismissError(): void {
@@ -245,6 +277,12 @@ export class App {
     private handleRuntimeReady(): void {
         this.status = 'ready';
         this.renderOverlay();
+
+        // Auto-run initial code to ensure visual feedback and backup state
+        const code = this.editor?.getValue() ?? '';
+        if (code) {
+            this.runtime?.runCode(code);
+        }
     }
 
     /**
@@ -274,5 +312,131 @@ export class App {
         }
 
         this.renderOverlay();
+    }
+
+    /**
+     * Setup keyboard shortcuts
+     */
+    private setupGlobalShortcuts(): void {
+        window.addEventListener('keydown', (e) => {
+            // Font size shortcuts: Ctrl + +/-
+            if (e.ctrlKey && (e.key === '+' || e.key === '=' || e.key === '-')) {
+                e.preventDefault();
+                const currentSize = this.settings.fontSize;
+                let newSize = currentSize;
+
+                if (e.key === '+' || e.key === '=') {
+                    newSize = Math.min(32, currentSize + 1);
+                } else {
+                    newSize = Math.max(10, currentSize - 1);
+                }
+
+                if (newSize !== currentSize) {
+                    this.handleSettingsChange({ ...this.settings, fontSize: newSize });
+                }
+            }
+
+            // Toggle auto-execute: Ctrl + E
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute });
+            }
+
+            // Toggle text background: Ctrl + B
+            if (e.ctrlKey && e.key === 'b') {
+                e.preventDefault();
+                this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect });
+            }
+
+            // Toggle UI visibility: Ctrl + H
+            if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                this.toggleUIVisibility();
+            }
+        });
+    }
+
+    /**
+     * Toggle UI visibility (editor, overlay, status indicator)
+     */
+    private toggleUIVisibility(): void {
+        const newVisibility = !this.settings.uiVisible;
+        this.settings = { ...this.settings, uiVisible: newVisibility };
+        // Don't save uiVisible to storage - it's a session-only setting
+
+        // Toggle editor visibility
+        if (this.editorContainer) {
+            this.editorContainer.style.display = newVisibility ? '' : 'none';
+        }
+
+        // Toggle overlay visibility
+        const overlayRoot = document.getElementById('overlay-root');
+        if (overlayRoot) {
+            overlayRoot.style.display = newVisibility ? '' : 'none';
+        }
+    }
+
+    /**
+     * Handle font size change by delta
+     */
+    private handleFontSizeChange(delta: number): void {
+        const currentSize = this.settings.fontSize;
+        const newSize = Math.min(32, Math.max(10, currentSize + delta));
+        if (newSize !== currentSize) {
+            this.handleSettingsChange({ ...this.settings, fontSize: newSize });
+        }
+    }
+
+    /**
+     * Setup mobile touch handling to enable pinch-to-zoom
+     * Monaco captures touch events, so we need to intercept multi-touch
+     * and let the browser handle them for native zooming
+     */
+    private setupMobileTouchHandling(): void {
+        if (!this.editorContainer) return;
+
+        // Track active touches
+        let touchCount = 0;
+
+        // When multi-touch starts, disable pointer-events on editor
+        // so browser can handle the native pinch-zoom gesture
+        this.editorContainer.addEventListener('touchstart', (e) => {
+            touchCount = e.touches.length;
+            if (touchCount >= 2) {
+                // Multi-touch detected - let browser handle it
+                this.editorContainer!.style.pointerEvents = 'none';
+            }
+        }, { passive: true });
+
+        this.editorContainer.addEventListener('touchend', () => {
+            touchCount = 0;
+            // Re-enable pointer events after gesture ends
+            if (this.editorContainer) {
+                this.editorContainer.style.pointerEvents = 'auto';
+            }
+        }, { passive: true });
+
+        this.editorContainer.addEventListener('touchcancel', () => {
+            touchCount = 0;
+            if (this.editorContainer) {
+                this.editorContainer.style.pointerEvents = 'auto';
+            }
+        }, { passive: true });
+
+        // Reset viewport zoom on page load (iOS Safari preserves zoom state)
+        // Use a small delay to ensure it runs after any auto-zoom from input focus
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                // Force viewport reset by briefly modifying and restoring the meta tag
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) {
+                    const content = viewport.getAttribute('content') || '';
+                    viewport.setAttribute('content', content + ', initial-scale=1');
+                    setTimeout(() => {
+                        viewport.setAttribute('content', content);
+                    }, 10);
+                }
+            }, 100);
+        });
     }
 }

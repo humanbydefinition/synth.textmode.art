@@ -85,6 +85,21 @@ function getTypesDir(packageName: string): string | null {
 }
 
 /**
+ * Strip @example blocks from JSDoc comments.
+ * Removes the @example tag and all content until the next JSDoc tag or end of comment.
+ */
+function stripExamples(content: string): string {
+    // Match @example blocks within JSDoc comments
+    // This regex captures @example and everything until:
+    // - Another JSDoc tag (@param, @returns, @see, etc.)
+    // - End of the JSDoc comment (*/)
+    return content.replace(
+        /@example[\s\S]*?(?=\s*\*\s*@[a-z]|\s*\*\/)/gi,
+        ''
+    );
+}
+
+/**
  * Escape content for inclusion in a template string
  */
 function escapeContent(str: string): string {
@@ -93,7 +108,7 @@ function escapeContent(str: string): string {
     return str
         .replace(/\\/g, '\\\\') // Escape backslashes first
         .replace(/`/g, '\\`')   // Escape backticks
-        .replace(/\$\{/g, '\\${'); // Escape interpolation
+        .replace(/\${/g, '\\${'); // Escape interpolation
 }
 
 // ============================================================================
@@ -137,7 +152,8 @@ function main() {
 
             const content = fs.readFileSync(filePath, 'utf-8');
 
-            outputMap[virtualPath] = content;
+            // Strip @example blocks from JSDoc comments
+            outputMap[virtualPath] = stripExamples(content);
         }
     }
 

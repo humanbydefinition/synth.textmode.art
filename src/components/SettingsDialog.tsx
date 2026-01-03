@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 export interface AppSettings {
     autoExecute: boolean;
     glassEffect: boolean;
+    fontSize: number;
+    uiVisible: boolean;
 }
 
 interface SettingsDialogProps {

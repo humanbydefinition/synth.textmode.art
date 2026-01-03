@@ -24,6 +24,12 @@ export interface MonacoEditorOptions {
     onChange?: (value: string) => void;
     onRun?: () => void;
     onSoftReset?: () => void;
+    onToggleUI?: () => void;
+    onToggleTextBackground?: () => void;
+    onToggleAutoExecute?: () => void;
+    onIncreaseFontSize?: () => void;
+    onDecreaseFontSize?: () => void;
+    fontSize?: number;
 }
 
 export interface MonacoEditorInstance {
@@ -32,6 +38,7 @@ export interface MonacoEditorInstance {
     setValue: (value: string) => void;
     setMarkers: (markers: monaco.editor.IMarkerData[]) => void;
     clearMarkers: () => void;
+    updateOptions: (options: monaco.editor.IEditorOptions) => void;
     dispose: () => void;
 }
 
@@ -152,7 +159,7 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
 
         // Editor behavior
         automaticLayout: true,
-        fontSize: 14,
+        fontSize: options.fontSize ?? 14,
         fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
         fontLigatures: true,
         tabSize: 2,
@@ -184,6 +191,31 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
         options.onSoftReset?.();
     });
 
+    // Ctrl+H: Toggle UI visibility
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyH, () => {
+        options.onToggleUI?.();
+    });
+
+    // Ctrl+B: Toggle text background
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, () => {
+        options.onToggleTextBackground?.();
+    });
+
+    // Ctrl+E: Toggle auto-execute
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyE, () => {
+        options.onToggleAutoExecute?.();
+    });
+
+    // Ctrl + +/=: Increase font size
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal, () => {
+        options.onIncreaseFontSize?.();
+    });
+
+    // Ctrl + -: Decrease font size
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus, () => {
+        options.onDecreaseFontSize?.();
+    });
+
     // Listen for changes
     model.onDidChangeContent(() => {
         options.onChange?.(model.getValue());
@@ -198,6 +230,9 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
         },
         clearMarkers: () => {
             monaco.editor.setModelMarkers(model, 'live-coding', []);
+        },
+        updateOptions: (options: monaco.editor.IEditorOptions) => {
+            editor.updateOptions(options);
         },
         dispose: () => {
             model.dispose();

@@ -13,6 +13,7 @@ body {
   overflow: hidden;
   background: #000;
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  touch-action: auto;
 }
 
 /* Force dark mode */
@@ -42,6 +43,21 @@ html {
   pointer-events: auto;
   /* Fully transparent - no background at all */
   background: transparent !important;
+  /* Prevent touch gestures from scrolling/zooming */
+  touch-action: none;
+}
+
+/* ===== iOS ZOOM PREVENTION ===== */
+/* iOS Safari auto-zooms inputs with font-size < 16px. 
+   Monaco uses a hidden textarea for input - we force it to 16px
+   to prevent zoom on focus */
+.monaco-editor .inputarea,
+.monaco-editor textarea,
+.monaco-editor input {
+  font-size: 16px !important;
+  transform: scale(0.875);
+  /* Scale back to approximate original size */
+  transform-origin: left top;
 }
 
 /* ===== MONACO TRANSPARENT THEME ===== */
@@ -187,4 +203,19 @@ html {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/* Hide scrollbar while maintaining scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
 }

@@ -1,5 +1,6 @@
 import { StatusIndicator, type StatusState } from './StatusIndicator';
-import { SettingsDialog, type AppSettings } from './SettingsDialog';
+import { SystemMenu } from './SystemMenu';
+import type { AppSettings } from './SettingsDialog'; // Keeping this import for the type
 import { ErrorOverlay, type ErrorInfo } from './ErrorOverlay';
 
 interface OverlayProps {
@@ -10,6 +11,7 @@ interface OverlayProps {
     onSettingsChange: (settings: AppSettings) => void;
     onShare: () => void;
     onClearStorage: () => void;
+    onLoadExample: (code: string) => void;
     onDismissError: () => void;
     onRevertToLastWorking: () => void;
 }
@@ -22,16 +24,18 @@ export function Overlay({
     onSettingsChange,
     onShare,
     onClearStorage,
+    onLoadExample,
     onDismissError,
     onRevertToLastWorking,
 }: OverlayProps) {
     return (
         <>
-            <SettingsDialog
+            <SystemMenu
                 settings={settings}
                 onSettingsChange={onSettingsChange}
                 onShare={onShare}
                 onClearStorage={onClearStorage}
+                onLoadExample={onLoadExample}
             />
             <StatusIndicator status={status} />
             <ErrorOverlay

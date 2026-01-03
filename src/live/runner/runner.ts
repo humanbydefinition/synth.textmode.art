@@ -21,6 +21,9 @@ import type { RunnerToParentMessage, ParentToRunnerMessage } from '../protocol';
 let t: ReturnType<typeof textmode.create> | null = null;
 let currentScope: ScopeTracker | null = null;
 let userDispose: (() => void) | null = null;
+let lastWorkingCode: string | null = null;
+let isRecovering = false;
+let currentCode: string | null = null;
 
 /**
  * Initialize the textmode instance
@@ -126,10 +129,72 @@ function createTrackedGlobals(scope: ScopeTracker) {
 }
 
 /**
+ * Report error to parent
+ */
+function reportError(error: Error | string | Event) {
+    let message = '';
+    let stack: string | undefined;
+    let line: number | undefined;
+    let column: number | undefined;
+
+    if (error instanceof Error) {
+        message = error.message;
+        stack = error.stack;
+
+        // Try to extract line/column from stack trace
+        const stackMatch = stack?.match(/<anonymous>:(\d+):(\d+)/);
+        if (stackMatch) {
+            // Subtract 1 for the "use strict" line we added
+            line = parseInt(stackMatch[1], 10) - 1;
+            column = parseInt(stackMatch[2], 10);
+        }
+    } else if (typeof error === 'string') {
+        message = error;
+    } else {
+        message = String(error);
+    }
+
+    sendMessage({
+        type: 'RUN_ERROR',
+        message: message,
+        stack,
+        line,
+        column,
+    });
+}
+
+/**
+ * Attempt to revert to last working code
+ */
+function attemptRevert() {
+    if (isRecovering) return; // Prevent infinite recursion
+    if (!lastWorkingCode) return; // No code to revert to
+    if (currentCode === lastWorkingCode) return; // Already on last working code, nothing we can do
+
+    console.log('Reverting to last working code due to error...');
+    isRecovering = true;
+
+    // We want to run the old code, but keep the error state reported to the user
+    // The parent will show the red error marker, but the visual will revert to the last working state
+    try {
+        // Run the last working code without updating currentCode to it initially
+        // so if IT fails, we don't loop. Actually, executeCode updates currentCode.
+        executeCode(lastWorkingCode, true);
+    } catch (e) {
+        console.error('Failed to revert to last working code:', e);
+    } finally {
+        isRecovering = false;
+    }
+}
+
+/**
  * Execute user code
  */
-function executeCode(code: string): void {
-    // Dispose previous execution
+function executeCode(code: string, isRevert: boolean = false): void {
+    // If we are recovering, we don't want to dispose the current (broken) state if it's already broken?
+    // No, we always want a clean slate for the new run.
+
+    // Dispose previous execution resources
     if (userDispose) {
         try {
             userDispose();
@@ -185,6 +250,8 @@ function executeCode(code: string): void {
     const globalKeys = Object.keys(globals);
     const globalValues = Object.values(globals);
 
+    currentCode = code;
+
     try {
         // Create function from code
         const fn = new Function(...globalKeys, `"use strict";\n${code}`);
@@ -197,28 +264,20 @@ function executeCode(code: string): void {
             userDispose = result;
         }
 
-        sendMessage({ type: 'RUN_OK', timestamp: Date.now() });
-    } catch (error) {
-        const err = error as Error;
-
-        // Try to extract line/column from stack trace
-        let line: number | undefined;
-        let column: number | undefined;
-
-        const stackMatch = err.stack?.match(/<anonymous>:(\d+):(\d+)/);
-        if (stackMatch) {
-            // Subtract 1 for the "use strict" line we added
-            line = parseInt(stackMatch[1], 10) - 1;
-            column = parseInt(stackMatch[2], 10);
+        if (!isRevert) {
+            // Only update last working code if this wasn't a revert action
+            // AND we successfully executed safely (synchronously at least)
+            lastWorkingCode = code;
+            sendMessage({ type: 'RUN_OK', timestamp: Date.now() });
         }
 
-        sendMessage({
-            type: 'RUN_ERROR',
-            message: err.message || String(error),
-            stack: err.stack,
-            line,
-            column,
-        });
+    } catch (error) {
+        reportError(error as Error);
+
+        // If this failed synchronously, try to revert immediately
+        if (!isRevert) {
+            attemptRevert();
+        }
     }
 }
 
@@ -244,9 +303,26 @@ function handleMessage(event: MessageEvent<ParentToRunnerMessage>): void {
 }
 
 /**
+ * Global Error Handlers
+ */
+function setupErrorHandlers() {
+    window.addEventListener('error', (event) => {
+        reportError(event.error || event.message);
+        attemptRevert();
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+        reportError(event.reason);
+        attemptRevert();
+    });
+}
+
+/**
  * Initialize runner
  */
 function init(): void {
+    setupErrorHandlers();
+
     // Initialize textmode
     initTextmode();
 
