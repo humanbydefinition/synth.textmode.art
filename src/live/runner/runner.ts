@@ -12,6 +12,10 @@ import {
     solid,
     shape,
     char,
+    voronoi,
+    charColor,
+    cellColor,
+    paint
 } from 'textmode.synth.js';
 import { createFiltersPlugin } from 'textmode.filters.js'
 import { ScopeTracker } from './scope';
@@ -223,6 +227,10 @@ function executeCode(code: string, isRevert: boolean = false): void {
         gradient,
         solid,
         shape,
+        voronoi,
+        charColor,
+        cellColor,
+        paint,
         char,
         SynthPlugin,
         // Tracked utilities
