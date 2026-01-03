@@ -36,6 +36,7 @@ export function ShortcutsTab() {
                 { keys: ["Ctrl", "Y"], description: "redo" },
                 { keys: ["Ctrl", "/"], description: "toggle comment" },
                 { keys: ["Alt", "Click"], description: "add multi-cursor" },
+                { keys: ["F1"], description: "open command palette" },
             ]
         },
         {

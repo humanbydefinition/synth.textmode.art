@@ -298,12 +298,23 @@ function handleMessage(event: MessageEvent<ParentToRunnerMessage>): void {
 
     switch (msg.type) {
         case 'RUN_CODE':
+            if (t) {
+                t.layers.all.forEach(layer => layer.draw(() => { }));
+                t.layers.clear();
+            }
             executeCode(msg.code);
             break;
         case 'SOFT_RESET':
             // Reset frameCount to 0 and re-run code
             if (t) {
-                (t as unknown as { frameCount: number }).frameCount = 0;
+                t.frameCount = 0;
+                if (t) {
+                    t.layers.all.forEach(layer => layer.draw(() => { }));
+                    t.layers.clear();
+                }
+                // Call `clearSynth` on all layers individually
+                t.layers.base.clearSynth();
+                t.layers.all.forEach(layer => layer.clearSynth());
             }
             executeCode(msg.code);
             break;

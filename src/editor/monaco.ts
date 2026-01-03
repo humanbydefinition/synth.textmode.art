@@ -122,6 +122,20 @@ function configureTypeScript(): void {
     for (const [path, content] of Object.entries(typeDefinitions)) {
         tsDefaults.addExtraLib(content, path);
     }
+
+    // Disable simplified mode to remove context menu items
+    tsDefaults.setModeConfiguration({
+        definitions: false,
+        references: false,
+        documentSymbols: false,
+        // Keep others enabled
+        completionItems: true,
+        hovers: true,
+        diagnostics: true,
+        documentHighlights: true,
+        rename: true, // Keep rename
+        documentRangeFormattingEdits: true, // Re-enable range formatting
+    });
 }
 
 /**
