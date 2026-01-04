@@ -14,8 +14,8 @@ export const examples: Example[] = [
   // Tutorial
   {
     id: 'tutorial-1',
-    name: 'Tutorial #1',
-    description: 'Introduction to synth.textmode.art',
+    name: 'tutorial #1',
+    description: 'introduction to synth.textmode.art',
     category: 'tutorial',
     code: `/**
  * Welcome to \`synth.textmode.art\`!
@@ -55,8 +55,8 @@ t.layers.base.synth(
   },
   {
     id: 'tutorial-2',
-    name: 'Tutorial #2',
-    description: 'Layering Channels & Composition',
+    name: 'tutorial #2',
+    description: 'layering channels & composition',
     category: 'tutorial',
     code: `/**
  * @title synth.textmode.art - tutorial #2
@@ -109,8 +109,8 @@ t.layers.base.synth(
   },
   {
     id: 'tutorial-3',
-    name: 'Tutorial #3',
-    description: 'Custom Character Maps',
+    name: 'tutorial #3',
+    description: 'custom character maps',
     category: 'tutorial',
     code: `/**
  * @title synth.textmode.art - tutorial #3
