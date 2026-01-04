@@ -10,7 +10,7 @@ export interface ExamplesTabProps {
 
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     const examplesByCategory = getExamplesByCategory();
-    const categories = ['basic', 'effects', 'advanced'];
+    const categories = ['tutorial', 'basic', 'effects', 'advanced'];
 
     const handleSelect = (example: Example) => {
         onLoadExample(example.code);
@@ -21,7 +21,7 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
         <ScrollArea className="h-full">
             <div className="p-6 space-y-6">
                 <p className="text-sm text-zinc-400">
-                    Select an example to load it into the editor. Your current code will be replaced.
+                    select an example to load it into the editor. your current code will be replaced.
                 </p>
 
                 {categories.map((category, index) => (
