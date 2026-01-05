@@ -17,7 +17,6 @@ export function LegalTab() {
                                     </p>
                                     <ul className="list-disc list-inside mt-1 text-zinc-500">
                                         <li>https://synth.textmode.art</li>
-                                        <li>https://*.textmode.art</li>
                                     </ul>
                                 </div>
 
