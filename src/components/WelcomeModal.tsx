@@ -27,6 +27,7 @@ export function WelcomeModal({ onOpenChange }: WelcomeModalProps) {
             const now = Date.now();
             // If less than 7 days have passed, don't show
             if (now - dismissedTime < SEVEN_DAYS_MS) {
+                onOpenChange?.(false);
                 return;
             }
         }
