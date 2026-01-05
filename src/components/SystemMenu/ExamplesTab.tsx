@@ -10,7 +10,7 @@ export interface ExamplesTabProps {
 
 export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
     const examplesByCategory = getExamplesByCategory();
-    const categories = ['tutorial', 'basic', 'effects', 'advanced'];
+    const categories = ['tutorial', /* 'basic', 'effects', 'advanced' */];
 
     const handleSelect = (example: Example) => {
         onLoadExample(example.code);
@@ -55,6 +55,12 @@ export function ExamplesTab({ onLoadExample, onClose }: ExamplesTabProps) {
                         </div>
                     </div>
                 ))}
+
+                <div className="pt-6 pb-2 text-center">
+                    <p className="text-xs text-zinc-500 italic">
+                        more examples & tutorials coming soon...
+                    </p>
+                </div>
             </div>
         </ScrollArea>
     );
