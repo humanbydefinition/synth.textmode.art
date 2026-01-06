@@ -1,0 +1,165 @@
+/**
+ * ExecutionContext - manages a single code execution.
+ * Handles the creation of globals, execution of user code, and cleanup.
+ */
+import type { IScopeTracker, ExecutionResult, ValidationResult, TextmodeInstance } from '../types';
+import { ScopeTracker } from './scope';
+import { GlobalsFactory, STANDARD_GLOBALS } from './GlobalsFactory';
+import { SafeProxyFactory } from './SafeProxyFactory';
+import { ErrorReporter } from './ErrorReporter';
+import {
+    src,
+    osc,
+    noise,
+    gradient,
+    solid,
+    shape,
+    char,
+    voronoi,
+    charColor,
+    cellColor,
+    paint,
+    SynthPlugin,
+} from 'textmode.synth.js';
+
+/**
+ * Synth exports to provide to user code
+ */
+const SYNTH_GLOBALS = {
+    src,
+    osc,
+    noise,
+    gradient,
+    solid,
+    shape,
+    voronoi,
+    charColor,
+    cellColor,
+    paint,
+    char,
+    SynthPlugin,
+};
+
+export interface ExecutionContextOptions {
+    /** Get the textmode instance */
+    getTextmode: () => TextmodeInstance | null;
+    /** Error reporter instance */
+    errorReporter: ErrorReporter;
+}
+
+/**
+ * Manages a single code execution context
+ */
+export class ExecutionContext {
+    private scope: IScopeTracker | null = null;
+    private userDispose: (() => void) | null = null;
+    private drawErrorOccurred = false;
+    private globalsFactory = new GlobalsFactory();
+    private proxyFactory: SafeProxyFactory;
+    private options: ExecutionContextOptions;
+
+    constructor(options: ExecutionContextOptions) {
+        this.options = options;
+        this.proxyFactory = new SafeProxyFactory({
+            onDrawError: (error) => {
+                this.drawErrorOccurred = true;
+                this.options.errorReporter.report(error);
+            },
+            hasDrawError: () => this.drawErrorOccurred,
+        });
+    }
+
+    /**
+     * Validate code syntax without executing
+     */
+    validateSyntax(code: string): ValidationResult {
+        try {
+            new Function(code);
+            return { valid: true };
+        } catch (error) {
+            return { valid: false, error: error as Error };
+        }
+    }
+
+    /**
+     * Execute user code
+     */
+    execute(code: string): ExecutionResult {
+        // Reset draw error state
+        this.drawErrorOccurred = false;
+
+        // Dispose previous execution
+        this.dispose();
+
+        // Create new scope
+        this.scope = new ScopeTracker();
+        const trackedGlobals = this.globalsFactory.create(this.scope);
+
+        // Get textmode and create safe proxy
+        const t = this.options.getTextmode();
+        const safeT = t ? this.proxyFactory.createTextmodeProxy(t) : null;
+
+        // Prepare globals
+        const globals: Record<string, unknown> = {
+            t: safeT,
+            ...SYNTH_GLOBALS,
+            ...trackedGlobals,
+            ...STANDARD_GLOBALS,
+        };
+
+        const globalKeys = Object.keys(globals);
+        const globalValues = Object.values(globals);
+
+        try {
+            // Create and execute function
+            const fn = new Function(...globalKeys, `"use strict";\n${code}`);
+            const result = fn(...globalValues);
+
+            // Store dispose callback if returned
+            if (typeof result === 'function') {
+                this.userDispose = result;
+            }
+
+            return {
+                success: true,
+                disposeCallback: this.userDispose ?? undefined,
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: {
+                    message: (error as Error).message,
+                    stack: (error as Error).stack,
+                },
+            };
+        }
+    }
+
+    /**
+     * Check if a draw error has occurred
+     */
+    hasDrawError(): boolean {
+        return this.drawErrorOccurred;
+    }
+
+    /**
+     * Dispose current execution resources
+     */
+    dispose(): void {
+        // Call user dispose callback
+        if (this.userDispose) {
+            try {
+                this.userDispose();
+            } catch (e) {
+                console.warn('Error in user dispose:', e);
+            }
+            this.userDispose = null;
+        }
+
+        // Dispose scope resources
+        if (this.scope) {
+            this.scope.dispose();
+            this.scope = null;
+        }
+    }
+}

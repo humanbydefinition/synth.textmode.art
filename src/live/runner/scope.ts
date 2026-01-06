@@ -2,7 +2,9 @@
  * ScopeTracker - Tracks and disposes resources created during sketch execution.
  * Handles timeouts, intervals, animation frames, event listeners, and custom disposers.
  */
-export class ScopeTracker {
+import type { IScopeTracker } from '../types';
+
+export class ScopeTracker implements IScopeTracker {
     private timeouts = new Set<number>();
     private intervals = new Set<number>();
     private rafs = new Set<number>();

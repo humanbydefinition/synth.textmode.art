@@ -3,19 +3,12 @@
  */
 import type { ParentToRunnerMessage } from './protocol';
 import { isRunnerMessage } from './protocol';
+import type { IHostRuntime, RuntimeError, HostRuntimeOptions } from './types';
 
-export interface HostRuntimeOptions {
-    /** Container element for the iframe */
-    container: HTMLElement;
-    /** Callback when runner is ready */
-    onReady?: () => void;
-    /** Callback when code runs successfully */
-    onRunOk?: (timestamp: number) => void;
-    /** Callback when code execution fails */
-    onRunError?: (error: { message: string; stack?: string; line?: number; column?: number }) => void;
-}
+// Re-export types for backward compatibility
+export type { HostRuntimeOptions } from './types';
 
-export class HostRuntime {
+export class HostRuntime implements IHostRuntime {
     private iframe: HTMLIFrameElement | null = null;
     private container: HTMLElement;
     private isReady = false;
@@ -25,7 +18,7 @@ export class HostRuntime {
 
     private onReady?: () => void;
     private onRunOk?: (timestamp: number) => void;
-    private onRunError?: (error: { message: string; stack?: string; line?: number; column?: number }) => void;
+    private onRunError?: (error: RuntimeError) => void;
 
     constructor(options: HostRuntimeOptions) {
         this.container = options.container;
