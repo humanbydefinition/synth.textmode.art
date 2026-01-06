@@ -1,7 +1,7 @@
 /**
  * Default example sketch code
  */
-export const exampleSketch = `// Live coding with textmode.synth.js
+export const defaultSketch = `// Live coding with textmode.synth.js
 // Ctrl+Enter = run · Ctrl+Shift+R = hard reset
 // Repo: https://github.com/humanbydefinition/textmode.synth.js
 

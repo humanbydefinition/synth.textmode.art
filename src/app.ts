@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { createElement } from 'react';
 import { createMonacoEditor, createErrorMarker, type MonacoEditorInstance } from './editor/monaco';
 import { HostRuntime } from './live/hostRuntime';
-import { exampleSketch } from './live/exampleSketch';
+import { defaultSketch } from './live/defaultSketch';
 import { getCodeFromHash, setCodeToHash, getShareableUrl } from './live/share';
 import { Overlay, type StatusState, type AppSettings, type ErrorInfo } from './components/Overlay';
 
@@ -123,7 +123,7 @@ export class App {
         const storedCode = localStorage.getItem(CODE_STORAGE_KEY);
         if (storedCode) return storedCode;
 
-        return exampleSketch;
+        return defaultSketch;
     }
 
     /**
@@ -246,7 +246,7 @@ export class App {
     private handleClearStorage(): void {
         localStorage.removeItem(CODE_STORAGE_KEY);
         this.lastWorkingCode = null;
-        this.editor?.setValue(exampleSketch);
+        this.editor?.setValue(defaultSketch);
         this.handleSoftReset();
     }
 
