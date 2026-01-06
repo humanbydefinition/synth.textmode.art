@@ -203,7 +203,7 @@ function wrapDrawCallback(callback: () => void): () => void {
 function createSafeTextmodeProxy(original: NonNullable<typeof t>): NonNullable<typeof t> {
     return new Proxy(original, {
         get(target, prop) {
-            const value = (target as Record<string | symbol, unknown>)[prop];
+            const value = (target as unknown as Record<string | symbol, unknown>)[prop];
 
             if (prop === 'draw') {
                 return (callback: () => void) => target.draw(wrapDrawCallback(callback));
@@ -224,7 +224,7 @@ function createSafeTextmodeProxy(original: NonNullable<typeof t>): NonNullable<t
 function createLayerManagerProxy(layers: NonNullable<typeof t>['layers']) {
     return new Proxy(layers, {
         get(target, prop) {
-            const value = (target as Record<string | symbol, unknown>)[prop];
+            const value = (target as unknown as Record<string | symbol, unknown>)[prop];
 
             if (prop === 'base') {
                 return createLayerProxy(target.base);
@@ -252,7 +252,7 @@ function createLayerManagerProxy(layers: NonNullable<typeof t>['layers']) {
 function createLayerProxy(layer: NonNullable<typeof t>['layers']['base']) {
     return new Proxy(layer, {
         get(target, prop) {
-            const value = (target as Record<string | symbol, unknown>)[prop];
+            const value = (target as unknown as Record<string | symbol, unknown>)[prop];
 
             if (prop === 'draw') {
                 return (callback: () => void) => target.draw(wrapDrawCallback(callback));
@@ -355,8 +355,8 @@ function executeCodeInternal(code: string, isSoftReset: boolean): void {
                 t.frameCount = 0;
                 t.secs = 0;
 
-                // Clear synth on base layer (always, since we're re-running code)
-                t.layers.base.clearSynth();
+                // Clear synth on all layers (base layer uses same pattern)
+                (t.layers.base as unknown as { clearSynth(): void }).clearSynth();
 
                 t.layers.all.forEach(layer => {
                     (layer as unknown as { clearSynth(): void }).clearSynth();

@@ -1,7 +1,7 @@
 /**
  * HostRuntime - manages the iframe lifecycle and communication from the parent window.
  */
-import type { RunnerToParentMessage, ParentToRunnerMessage } from './protocol';
+import type { ParentToRunnerMessage } from './protocol';
 import { isRunnerMessage } from './protocol';
 
 export interface HostRuntimeOptions {
