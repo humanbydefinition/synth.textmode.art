@@ -171,6 +171,22 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
             enabled: false,
         },
 
+        // Disable visual guides and artifacts
+        guides: {
+            indentation: false,
+            bracketPairs: false,
+            highlightActiveIndentation: false,
+            bracketPairsHorizontal: false,
+        },
+        renderWhitespace: 'none',
+        renderControlCharacters: false,
+        renderLineHighlightOnlyWhenFocus: true,
+        matchBrackets: 'never',
+        occurrencesHighlight: 'off',
+        selectionHighlight: false,
+        links: false,
+        colorDecorators: false,
+
         // Editor behavior
         automaticLayout: true,
         fontSize: options.fontSize ?? 14,

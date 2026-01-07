@@ -6,6 +6,10 @@
 export { HostRuntime } from './hostRuntime';
 export type { HostRuntimeOptions } from './hostRuntime';
 
+// Strudel runtime (audio)
+export { StrudelRuntime } from './strudel';
+export type { StrudelRuntimeOptions, StrudelError } from './strudel';
+
 // Types
 export type {
     RuntimeError,
@@ -16,6 +20,7 @@ export type {
 
 // Content
 export { defaultSketch } from './defaultSketch';
+export { defaultStrudelSketch } from './defaultStrudelSketch';
 export { examples, getExamplesByCategory, categoryNames } from './examples';
 export type { Example } from './examples';
 

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Play, AlertCircle, CheckCircle2, Volume2 } from 'lucide-react';
 import {
     Popover,
     PopoverContent,
@@ -11,6 +11,7 @@ export type StatusState = 'ready' | 'running' | 'error' | 'updated';
 
 interface StatusIndicatorProps {
     status: StatusState;
+    isAudioPlaying?: boolean;
     className?: string;
 }
 
@@ -49,7 +50,7 @@ const statusConfig = {
     },
 };
 
-export function StatusIndicator({ status, className }: StatusIndicatorProps) {
+export function StatusIndicator({ status, isAudioPlaying, className }: StatusIndicatorProps) {
     const config = statusConfig[status];
     const Icon = config.icon;
     const [isOpen, setIsOpen] = useState(false);
@@ -123,19 +124,37 @@ export function StatusIndicator({ status, className }: StatusIndicatorProps) {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
             >
-                <div className="flex items-center gap-2">
-                    <div
-                        className={cn(
-                            'flex items-center justify-center w-6 h-6 rounded-full',
-                            config.bgColor
-                        )}
-                    >
-                        <Icon className={cn('w-3.5 h-3.5', config.color)} />
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div
+                            className={cn(
+                                'flex items-center justify-center w-6 h-6 rounded-full',
+                                config.bgColor
+                            )}
+                        >
+                            <Icon className={cn('w-3.5 h-3.5', config.color)} />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-white">{config.label}</p>
+                            <p className="text-xs text-zinc-500">{config.description}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-white">{config.label}</p>
-                        <p className="text-xs text-zinc-500">{config.description}</p>
-                    </div>
+                    {isAudioPlaying !== undefined && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-white/5">
+                            <div
+                                className={cn(
+                                    'flex items-center justify-center w-6 h-6 rounded-full',
+                                    isAudioPlaying ? 'bg-purple-500/20' : 'bg-zinc-500/20'
+                                )}
+                            >
+                                <Volume2 className={cn('w-3.5 h-3.5', isAudioPlaying ? 'text-purple-400' : 'text-zinc-500')} />
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-white">{isAudioPlaying ? 'audio playing' : 'audio stopped'}</p>
+                                <p className="text-xs text-zinc-500">Strudel audio engine</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </PopoverContent>
         </Popover>

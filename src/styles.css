@@ -33,8 +33,10 @@ html {
 }
 
 /* ===== MONACO EDITOR CONTAINER ===== */
-#editor-container {
-  position: fixed;
+/* Default editor container (textmode) - positioned relative to panel */
+#editor-container,
+.editor-container {
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
@@ -44,6 +46,19 @@ html {
   /* Fully transparent - no background at all */
   background: transparent !important;
   /* Prevent touch gestures from scrolling/zooming */
+  touch-action: none;
+}
+
+/* Strudel editor needs slightly different styling */
+#strudel-editor-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: auto;
+  background: transparent !important;
   touch-action: none;
 }
 
@@ -76,7 +91,8 @@ html {
 
 /* ===== TEXT-ONLY BACKGROUND EFFECT ===== */
 /* Apply dark background only to the text spans themselves */
-#editor-container.glass-effect .monaco-editor .view-line>span {
+#editor-container.glass-effect .monaco-editor .view-line>span,
+#strudel-editor-container.glass-effect .monaco-editor .view-line>span {
   background: rgba(0, 0, 0, 0.7);
   border-radius: 2px;
   box-decoration-break: clone;
@@ -84,7 +100,8 @@ html {
 }
 
 /* Without glass effect, use strong text shadows for readability */
-#editor-container:not(.glass-effect) .monaco-editor .view-line span {
+#editor-container:not(.glass-effect) .monaco-editor .view-line span,
+#strudel-editor-container:not(.glass-effect) .monaco-editor .view-line span {
   text-shadow:
     0 0 6px rgba(0, 0, 0, 1),
     0 0 12px rgba(0, 0, 0, 0.95),
@@ -94,7 +111,8 @@ html {
 }
 
 /* With glass effect, minimal shadow since background provides contrast */
-#editor-container.glass-effect .monaco-editor .view-line span {
+#editor-container.glass-effect .monaco-editor .view-line span,
+#strudel-editor-container.glass-effect .monaco-editor .view-line span {
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
@@ -123,11 +141,20 @@ html {
 .monaco-editor-background,
 .monaco-editor .inputarea.ime-input {
   outline: none !important;
+  border: none !important;
 }
 
 .monaco-editor.focused {
   outline: none !important;
   box-shadow: none !important;
+  border: none !important;
+}
+
+/* Ensure no borders on editor containers */
+#editor-container,
+#strudel-editor-container {
+  border: none !important;
+  outline: none !important;
 }
 
 /* ===== REACT OVERLAY ROOT ===== */
@@ -251,4 +278,292 @@ html {
     0 0 15px rgba(255, 255, 255, 0.6),
     0 0 30px rgba(0, 0, 0, 0.4);
   animation: sonar-ping 0.6s ease-out forwards;
+}
+
+/* ===== SPLIT SCREEN LAYOUT ===== */
+#app-container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#textmode-panel {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+#strudel-panel {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  background: transparent;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+/* ===== SPLIT RESIZER ===== */
+#split-resizer {
+  position: relative;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 20;
+  flex-shrink: 0;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#split-resizer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0);
+  transition: background 0.15s ease, width 0.15s ease;
+}
+
+#split-resizer:hover::before,
+#split-resizer.dragging::before {
+  background: rgba(255, 255, 255, 0.2);
+  width: 2px;
+}
+
+#split-resizer.dragging::before {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Hide resizer on mobile */
+@media (max-width: 768px) {
+  #split-resizer {
+    display: none;
+  }
+}
+
+/* Panel-specific editor containers */
+.panel-editor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Panel header for mobile tab layout */
+.panel-header {
+  display: none;
+}
+
+/* Active panel indicator */
+.panel-active-indicator {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+#textmode-panel:focus-within .panel-active-indicator,
+#strudel-panel:focus-within .panel-active-indicator {
+  opacity: 1;
+}
+
+/* Mobile: Tab layout for editors */
+@media (max-width: 768px) {
+  #app-container {
+    flex-direction: column;
+  }
+
+  #app-container.tab-layout {
+    flex-direction: column;
+  }
+
+  #app-container.tab-layout #textmode-panel,
+  #app-container.tab-layout #strudel-panel {
+    position: absolute;
+    top: 48px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 48px);
+    border-left: none;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+  }
+
+  #app-container.tab-layout #textmode-panel.hidden,
+  #app-container.tab-layout #strudel-panel.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .panel-header {
+    display: flex;
+  }
+}
+
+/* Mobile tab bar */
+.mobile-tab-bar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 48px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 200;
+}
+
+@media (max-width: 768px) {
+  .mobile-tab-bar {
+    display: flex;
+  }
+}
+
+.mobile-tab-bar button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.mobile-tab-bar button.active {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mobile-tab-bar button:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Audio indicator in tab */
+.audio-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulse-audio 1s ease infinite;
+}
+
+@keyframes pulse-audio {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Audio controls styling */
+.audio-controls {
+  position: fixed;
+  bottom: 60px;
+  right: 16px;
+  z-index: 150;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 6px;
+}
+
+.audio-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.audio-controls button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.audio-controls button:active {
+  transform: scale(0.95);
+}
+
+.audio-controls button.playing {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: rgba(34, 197, 94, 0.5);
+}
+
+/* Audio initialization prompt */
+.audio-init-prompt {
+  position: fixed;
+  bottom: 60px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 13px;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: slide-up 0.3s ease;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.audio-init-prompt button {
+  background: rgba(139, 92, 246, 0.8);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.audio-init-prompt button:hover {
+  background: rgba(139, 92, 246, 1);
 }
