@@ -3,7 +3,7 @@
  * Handles initialization, resize, layer cleanup, and loop control.
  */
 import { textmode } from 'textmode.js';
-import { SynthPlugin } from 'textmode.synth.js';
+import { SynthPlugin, setGlobalErrorCallback } from 'textmode.synth.js';
 import { createFiltersPlugin } from 'textmode.filters.js';
 import type { TextmodeInstance, ITextmodeManager, SynthLayer } from '../types';
 
@@ -12,6 +12,9 @@ import type { TextmodeInstance, ITextmodeManager, SynthLayer } from '../types';
  */
 export class TextmodeManager implements ITextmodeManager {
     private instance: TextmodeInstance | null = null;
+
+    /** Callback for synth dynamic parameter errors */
+    private onSynthError?: (error: Error) => void;
 
     /**
      * Get the textmode instance
@@ -74,21 +77,38 @@ export class TextmodeManager implements ITextmodeManager {
                 layer.draw(() => { });
             });
 
+            // Always clear synths to prevent broken synth state from persisting
+            // This is critical for error recovery - a broken synth (e.g., from a dynamic
+            // parameter error) would continue to throw errors every frame otherwise
+            this.clearAllSynths();
+
             this.instance.layers.clear();
 
             // For soft reset, also reset frame count
             if (isSoftReset) {
                 this.instance.frameCount = 0;
                 this.instance.secs = 0;
-
-                // Clear synth on all layers
-                this.clearSynth(this.instance.layers.base);
-                this.instance.layers.all.forEach(layer => {
-                    this.clearSynth(layer);
-                });
             }
         } catch (e) {
             console.warn('Error during layer cleanup:', e);
+        }
+    }
+
+    /**
+     * Clear synths on all layers (base + user layers)
+     * This is essential for error recovery - broken synths would otherwise
+     * continue throwing errors every frame
+     */
+    clearAllSynths(): void {
+        if (!this.instance) return;
+
+        try {
+            this.clearSynth(this.instance.layers.base);
+            this.instance.layers.all.forEach(layer => {
+                this.clearSynth(layer);
+            });
+        } catch (e) {
+            console.warn('Error clearing synths:', e);
         }
     }
 
@@ -120,10 +140,35 @@ export class TextmodeManager implements ITextmodeManager {
     };
 
     /**
+     * Set up a handler for synth dynamic parameter errors.
+     * Uses setGlobalErrorCallback from textmode.synth.js to route errors
+     * directly to the editor's error UI instead of the console.
+     * 
+     * @param handler Callback function invoked when a synth error is detected
+     */
+    setupSynthErrorHandler(handler: (error: Error) => void): void {
+        this.onSynthError = handler;
+
+        // Use the library's global error callback to route errors to our handler
+        // This replaces the default console.warn behavior with our editor UI
+        setGlobalErrorCallback((error: unknown, uniformName: string) => {
+            const errorObj = error instanceof Error
+                ? error
+                : new Error(`Synth error in "${uniformName}": ${String(error)}`);
+
+            this.onSynthError?.(errorObj);
+        });
+    }
+
+    /**
      * Dispose resources
      */
     dispose(): void {
         window.removeEventListener('resize', this.handleResize);
+
+        // Clear the global synth error callback
+        setGlobalErrorCallback(null);
+
         // Note: textmode doesn't have a dispose method currently
     }
 }

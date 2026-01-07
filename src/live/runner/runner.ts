@@ -43,6 +43,14 @@ class Runner {
     init(): void {
         this.setupErrorHandlers();
         this.textmode.init();
+
+        // Set up synth error handler to capture dynamic parameter errors
+        // These errors occur when user code like .colorama(() => t.secs()) fails
+        // (t.secs is a getter, not a function)
+        this.textmode.setupSynthErrorHandler((error) => {
+            this.errorReporter.report(error);
+        });
+
         window.addEventListener('message', this.handleMessage);
         this.sendMessage({ type: 'READY' });
     }
@@ -117,13 +125,22 @@ class Runner {
     private restoreLastWorking(): void {
         if (!this.lastWorkingCode) return;
 
-        // Clean up and re-execute last working code
-        this.textmode.cleanupLayers(false);
-        const result = this.context.execute(this.lastWorkingCode);
+        try {
+            // CRITICAL: Clear all synths first to remove any broken synth state
+            // This handles cases where a synth's dynamic parameter threw an error
+            // after being registered (e.g., .colorama(() => t.secs()) where t.secs is a getter)
+            //this.textmode.clearAllSynths();
 
-        if (!result.success) {
-            // This shouldn't happen, but log it if it does
-            console.warn('Failed to restore last working code:', result.error?.message);
+            // Clean up and re-execute last working code
+            this.textmode.cleanupLayers(false);
+            const result = this.context.execute(this.lastWorkingCode);
+
+            if (!result.success) {
+                // This shouldn't happen, but log it if it does
+                console.warn('Failed to restore last working code:', result.error?.message);
+            }
+        } catch (e) {
+            console.warn('Error during restoration:', e);
         }
     }
 
