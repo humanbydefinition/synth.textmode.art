@@ -37,8 +37,11 @@ class Runner {
         });
     }
 
-    /** Flag to track if synth errors occurred after execution */
-    private hasSynthErrors = false;
+
+    /** Flag to prevent reporting the same synth error every frame */
+    private synthErrorReported = false;
+
+
 
     /**
      * Initialize the runner
@@ -51,20 +54,26 @@ class Runner {
         // These errors occur when user code like .colorama(() => t.secs()) fails
         // (t.secs is a getter, not a function)
         this.textmode.setupSynthErrorHandler((error) => {
-            // Mark that synth errors occurred - this prevents the code from being
-            // saved as "last working" since it has runtime issues
-            this.hasSynthErrors = true;
-
-            // Send synth error message to parent for display
-            this.sendMessage({
-                type: 'SYNTH_ERROR',
-                message: error.message
-            });
+            // Send synth error message to parent for display, but only once per execution.
+            // The error callback fires every frame while the invalid parameter persists,
+            // so we only report the first error to avoid flooding the UI.
+            // Note: We do NOT restore the last working code here because
+            // textmode.synth.js now handles errors gracefully with fallback values.
+            // The synth continues rendering with defaults, so the animation keeps running.
+            if (!this.synthErrorReported) {
+                this.synthErrorReported = true;
+                this.sendMessage({
+                    type: 'SYNTH_ERROR',
+                    message: error.message
+                });
+            }
         });
 
         window.addEventListener('message', this.handleMessage);
         this.sendMessage({ type: 'READY' });
     }
+
+
 
     /**
      * Handle messages from parent window
@@ -102,9 +111,8 @@ class Runner {
      * Internal execution (called by scheduler at safe frame boundary)
      */
     private executeInternal(code: string, isSoftReset: boolean): void {
-        // Reset synth error flag before new execution
-        // This will be set to true if synth errors occur during rendering
-        this.hasSynthErrors = false;
+        // Reset synth error flags before new execution
+        this.synthErrorReported = false;
 
         // Pause animation loop during setup
         this.textmode.pause();
@@ -162,16 +170,54 @@ class Runner {
     }
 
     /**
-     * Setup global error handlers
+     * Setup global error handlers.
+     * 
+     * Since the synth library now throws errors (after calling the error callback),
+     * we need to catch them at the window level to prevent the sketch from breaking.
+     * We detect synth errors by their message prefix and suppress them while still
+     * sending error notifications to the parent.
      */
     private setupErrorHandlers(): void {
+        // Handle synchronous errors
         window.addEventListener('error', (event) => {
-            this.errorReporter.report(event.error || event.message);
+            const error = event.error;
+            const message = error?.message || String(event.message);
+
+            // Check if this is a synth dynamic parameter error
+            if (this.isSynthError(message)) {
+                // Prevent default browser error handling (keeps sketch running)
+                event.preventDefault();
+                // Don't double-report - the synth error callback already sent SYNTH_ERROR
+                return;
+            }
+
+            // Regular error - report it
+            this.errorReporter.report(error || message);
         });
 
+        // Handle promise rejections (async errors from render loop)
         window.addEventListener('unhandledrejection', (event) => {
-            this.errorReporter.report(event.reason);
+            const reason = event.reason;
+            const message = reason?.message || String(reason);
+
+            // Check if this is a synth dynamic parameter error
+            if (this.isSynthError(message)) {
+                // Prevent the rejection from being logged as unhandled
+                event.preventDefault();
+                // Don't double-report - the synth error callback already sent SYNTH_ERROR
+                return;
+            }
+
+            // Regular rejection - report it
+            this.errorReporter.report(reason);
         });
+    }
+
+    /**
+     * Check if an error message is from a synth dynamic parameter error
+     */
+    private isSynthError(message: string): boolean {
+        return message.includes('[textmode.synth.js]');
     }
 
     /**
