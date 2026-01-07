@@ -27,6 +27,8 @@ export interface IRuntimeEvents {
     onRunOk(timestamp: number): void;
     /** Called when code execution fails */
     onRunError(error: RuntimeError): void;
+    /** Called when a synth dynamic parameter error occurs during rendering */
+    onSynthError?(error: RuntimeError): void;
 }
 
 /**

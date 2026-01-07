@@ -19,12 +19,14 @@ export class HostRuntime implements IHostRuntime {
     private onReady?: () => void;
     private onRunOk?: (timestamp: number) => void;
     private onRunError?: (error: RuntimeError) => void;
+    private onSynthError?: (error: RuntimeError) => void;
 
     constructor(options: HostRuntimeOptions) {
         this.container = options.container;
         this.onReady = options.onReady;
         this.onRunOk = options.onRunOk;
         this.onRunError = options.onRunError;
+        this.onSynthError = options.onSynthError;
 
         // Listen for messages from iframe
         window.addEventListener('message', this.handleMessage);
@@ -92,6 +94,12 @@ export class HostRuntime implements IHostRuntime {
                     stack: msg.stack,
                     line: msg.line,
                     column: msg.column,
+                });
+                break;
+
+            case 'SYNTH_ERROR':
+                this.onSynthError?.({
+                    message: msg.message,
                 });
                 break;
         }

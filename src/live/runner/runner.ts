@@ -37,6 +37,9 @@ class Runner {
         });
     }
 
+    /** Flag to track if synth errors occurred after execution */
+    private hasSynthErrors = false;
+
     /**
      * Initialize the runner
      */
@@ -48,7 +51,15 @@ class Runner {
         // These errors occur when user code like .colorama(() => t.secs()) fails
         // (t.secs is a getter, not a function)
         this.textmode.setupSynthErrorHandler((error) => {
-            this.errorReporter.report(error);
+            // Mark that synth errors occurred - this prevents the code from being
+            // saved as "last working" since it has runtime issues
+            this.hasSynthErrors = true;
+
+            // Send synth error message to parent for display
+            this.sendMessage({
+                type: 'SYNTH_ERROR',
+                message: error.message
+            });
         });
 
         window.addEventListener('message', this.handleMessage);
@@ -91,6 +102,10 @@ class Runner {
      * Internal execution (called by scheduler at safe frame boundary)
      */
     private executeInternal(code: string, isSoftReset: boolean): void {
+        // Reset synth error flag before new execution
+        // This will be set to true if synth errors occur during rendering
+        this.hasSynthErrors = false;
+
         // Pause animation loop during setup
         this.textmode.pause();
 
@@ -103,6 +118,8 @@ class Runner {
 
             if (result.success) {
                 // Store as last working code for error recovery
+                // Note: If synth errors occur during rendering, the parent will
+                // receive SYNTH_ERROR and won't update its lastWorkingCode
                 this.lastWorkingCode = code;
                 this.sendMessage({ type: 'RUN_OK', timestamp: Date.now() });
             } else if (result.error) {

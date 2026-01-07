@@ -20,7 +20,18 @@ export interface RunErrorMessage {
     column?: number;
 }
 
-export type RunnerToParentMessage = ReadyMessage | RunOkMessage | RunErrorMessage;
+/**
+ * Synth dynamic parameter error message.
+ * Sent when a synth function like .colorama(() => undefined) fails during rendering.
+ * Unlike RUN_ERROR, the sketch continues running but with fallback values.
+ */
+export interface SynthErrorMessage {
+    type: 'SYNTH_ERROR';
+    message: string;
+    uniformName?: string;
+}
+
+export type RunnerToParentMessage = ReadyMessage | RunOkMessage | RunErrorMessage | SynthErrorMessage;
 
 // Messages from parent to runner
 export interface RunCodeMessage {
@@ -44,5 +55,5 @@ export type Message = RunnerToParentMessage | ParentToRunnerMessage;
 export function isRunnerMessage(msg: unknown): msg is RunnerToParentMessage {
     if (typeof msg !== 'object' || msg === null) return false;
     const m = msg as { type?: string };
-    return m.type === 'READY' || m.type === 'RUN_OK' || m.type === 'RUN_ERROR';
+    return m.type === 'READY' || m.type === 'RUN_OK' || m.type === 'RUN_ERROR' || m.type === 'SYNTH_ERROR';
 }
