@@ -2,12 +2,12 @@
  * Main application - orchestrates Monaco editor, iframe runtime, React UI, and state
  */
 import { createRoot, type Root } from 'react-dom/client';
-import { createElement } from 'react';
+import { createElement, createRef } from 'react';
 import { createMonacoEditor, createErrorMarker, type MonacoEditorInstance } from './editor/monaco';
 import { HostRuntime } from './live/hostRuntime';
 import { defaultSketch } from './live/defaultSketch';
 import { getCodeFromHash, setCodeToHash, getShareableUrl } from './live/share';
-import { Overlay, type StatusState, type AppSettings, type ErrorInfo } from './components/Overlay';
+import { Overlay, type StatusState, type AppSettings, type ErrorInfo, type MouseSonarHandle } from './components/Overlay';
 
 const CODE_STORAGE_KEY = 'textmode_live_code';
 const SETTINGS_STORAGE_KEY = 'textmode_live_settings';
@@ -24,12 +24,20 @@ export class App {
     private runtime: HostRuntime | null = null;
     private editorContainer: HTMLElement | null = null;
     private overlayRoot: Root | null = null;
+    private sonarRef = createRef<MouseSonarHandle>();
 
     // State
     private status: StatusState = 'ready';
     private error: ErrorInfo | null = null;
     private settings: AppSettings = DEFAULT_SETTINGS;
     private lastWorkingCode: string | null = null;
+    private lastCtrlPressTime = 0;
+
+    // Pending confirmation for lastWorkingCode
+    // Code only becomes 'working' if no SYNTH_ERROR arrives within this window
+    private pendingWorkingCode: string | null = null;
+    private confirmationTimer: number | null = null;
+    private static readonly CONFIRMATION_DELAY_MS = 100;
 
     /**
      * Initialize the application
@@ -79,6 +87,7 @@ export class App {
             onReady: () => this.handleRuntimeReady(),
             onRunOk: () => this.handleRunOk(),
             onRunError: (error) => this.handleRunError(error),
+            onSynthError: (error) => this.handleSynthError(error),
         });
 
         // Initial render of React overlay
@@ -109,6 +118,7 @@ export class App {
                 onLoadExample: (code) => this.handleLoadExample(code),
                 onDismissError: () => this.handleDismissError(),
                 onRevertToLastWorking: () => this.handleRevertToLastWorking(),
+                sonarRef: this.sonarRef,
             })
         );
     }
@@ -289,9 +299,27 @@ export class App {
      * Handle successful code execution
      */
     private handleRunOk(): void {
-        // Store the current code as last working
+        // Don't immediately mark as last working - wait for confirmation
+        // that no synth errors occur. This handles cases like:
+        // .colorama(() => undefined) which executes fine but errors during rendering
         const code = this.editor?.getValue() ?? '';
-        this.lastWorkingCode = code;
+
+        // Cancel any pending confirmation
+        if (this.confirmationTimer !== null) {
+            clearTimeout(this.confirmationTimer);
+        }
+
+        // Store as pending - will be confirmed if no SYNTH_ERROR arrives
+        this.pendingWorkingCode = code;
+
+        this.confirmationTimer = window.setTimeout(() => {
+            // No synth errors arrived - confirm this code as working
+            if (this.pendingWorkingCode !== null) {
+                this.lastWorkingCode = this.pendingWorkingCode;
+                this.pendingWorkingCode = null;
+            }
+            this.confirmationTimer = null;
+        }, App.CONFIRMATION_DELAY_MS);
 
         this.status = 'running';
         this.error = null;
@@ -315,10 +343,45 @@ export class App {
     }
 
     /**
+     * Handle synth dynamic parameter error.
+     * Cancels any pending confirmation, preventing broken code from being
+     * saved as "last working". This allows the revert button to work correctly.
+     */
+    private handleSynthError(error: ErrorInfo): void {
+        // Cancel pending confirmation - this code has synth errors so should NOT
+        // become lastWorkingCode
+        if (this.confirmationTimer !== null) {
+            clearTimeout(this.confirmationTimer);
+            this.confirmationTimer = null;
+        }
+        this.pendingWorkingCode = null;
+
+        // Show error in UI
+        this.status = 'error';
+        this.error = error;
+
+        // Note: No editor markers for synth errors since they don't have line numbers
+
+        this.renderOverlay();
+    }
+
+    /**
      * Setup keyboard shortcuts
      */
     private setupGlobalShortcuts(): void {
         window.addEventListener('keydown', (e) => {
+            // Double-tap Ctrl: Trigger mouse sonar ping
+            if (e.key === 'Control' && !e.repeat) {
+                const now = Date.now();
+                if (now - this.lastCtrlPressTime < 400) {
+                    // Double-tap detected
+                    this.sonarRef.current?.ping();
+                    this.lastCtrlPressTime = 0; // Reset to prevent triple-tap trigger
+                } else {
+                    this.lastCtrlPressTime = now;
+                }
+            }
+
             // Font size shortcuts: Ctrl + +/-
             if (e.ctrlKey && (e.key === '+' || e.key === '=' || e.key === '-')) {
                 e.preventDefault();

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, type RefObject } from 'react';
 import { StatusIndicator, type StatusState } from './StatusIndicator';
 import { SystemMenu } from './SystemMenu';
 import type { AppSettings } from './SettingsDialog'; // Keeping this import for the type
 import { ErrorOverlay, type ErrorInfo } from './ErrorOverlay';
 import { WelcomeModal } from './WelcomeModal';
+import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
 import { cn } from '@/lib/utils';
 
 interface OverlayProps {
@@ -17,6 +18,7 @@ interface OverlayProps {
     onLoadExample: (code: string) => void;
     onDismissError: () => void;
     onRevertToLastWorking: () => void;
+    sonarRef?: RefObject<MouseSonarHandle | null>;
 }
 
 export function Overlay({
@@ -30,12 +32,16 @@ export function Overlay({
     onLoadExample,
     onDismissError,
     onRevertToLastWorking,
+    sonarRef,
 }: OverlayProps) {
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
     return (
         <>
             <WelcomeModal onOpenChange={setWelcomeOpen} />
+
+            {/* Mouse Sonar - always rendered for cursor finding */}
+            <MouseSonar ref={sonarRef} />
 
             {/* Main UI - hidden when welcome modal is open, with smooth transition */}
             <div
@@ -63,4 +69,5 @@ export function Overlay({
     );
 }
 
-export type { StatusState, AppSettings, ErrorInfo };
+export type { StatusState, AppSettings, ErrorInfo, MouseSonarHandle };
+
