@@ -13,11 +13,11 @@ import { Badge } from '@/components/ui/badge';
 const WELCOME_DISMISSED_KEY = 'textmode_welcome_dismissed';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-interface WelcomeModalProps {
+interface WelcomeDialogProps {
     onOpenChange?: (isOpen: boolean) => void;
 }
 
-export function WelcomeModal({ onOpenChange }: WelcomeModalProps) {
+export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
     const [open, setOpen] = useState(false);
 
     useEffect(() => {

@@ -239,10 +239,13 @@ export class App {
      * Handle panel change from layout manager (for editor focus)
      */
     private handlePanelChange(panel: 'textmode' | 'strudel'): void {
-        if (panel === 'textmode') {
-            this.textmodeEditor?.editor.focus();
-        } else {
-            this.strudelEditor?.focus();
+        // Only auto-focus on desktop to avoid triggering keyboard on mobile
+        if (!this.layout?.isMobile) {
+            if (panel === 'textmode') {
+                this.textmodeEditor?.editor.focus();
+            } else {
+                this.strudelEditor?.focus();
+            }
         }
         this.renderOverlay();
     }

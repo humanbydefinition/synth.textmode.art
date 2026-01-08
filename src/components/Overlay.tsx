@@ -1,8 +1,8 @@
 import { useState, type RefObject } from 'react';
-import { StatusIndicator } from './StatusIndicator';
-import { SystemMenu } from './SystemMenu';
+
+import { SystemMenu } from './SystemMenu/SystemMenu';
 import { ErrorOverlay } from './ErrorOverlay';
-import { WelcomeModal } from './WelcomeModal';
+import { WelcomeDialog } from './WelcomeDialog';
 import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
 import { MobileTabBar } from './AudioControls';
 import { cn } from '@/lib/utils';
@@ -60,7 +60,7 @@ export function Overlay({
 
     return (
         <>
-            <WelcomeModal onOpenChange={setWelcomeOpen} />
+            <WelcomeDialog onOpenChange={setWelcomeOpen} />
 
             {/* Mouse Sonar - always rendered for cursor finding */}
             <MouseSonar ref={sonarRef} />
@@ -88,10 +88,7 @@ export function Overlay({
                     onClearStorage={onClearStorage}
                     onLoadExample={onLoadExample}
                 />
-                <StatusIndicator
-                    status={status}
-                    isAudioPlaying={audioState?.isPlaying}
-                />
+
                 <ErrorOverlay
                     error={error}
                     hasLastWorking={hasLastWorking}

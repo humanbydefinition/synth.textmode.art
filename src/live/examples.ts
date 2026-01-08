@@ -135,7 +135,7 @@ t.layers.base.synth(
  * - We use \`char(src, 2)\` to tell the renderer we only want to pick from the first 2 characters.
  * - The source brightness is then mapped to indices 0 ('0') and 1 ('1').
  *
- * This allows for incredibly precise control. By changing the \`charMap\` to " /\\" and the count to 3,
+ * This allows for precise control. By changing the \`charMap\` to " /\\" and the count to 3,
  * we could create mazes or geometric patterns!
  *
  * Try changing the charMap string below to " ." to see a simple dot matrix,

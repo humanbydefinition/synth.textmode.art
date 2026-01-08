@@ -162,16 +162,16 @@ export function createStrudelMonacoEditor(options: StrudelMonacoOptions): Strude
                     if (m.owner === 'strudel-live') return true;
                     if (m.owner === 'javascript') {
                         // m.code can be string, number, or {value, target}
-                        const code = typeof m.code === 'number' ? m.code : 
-                                     typeof m.code === 'string' ? parseInt(m.code, 10) : 
-                                     typeof m.code === 'object' && m.code ? parseInt(m.code.value, 10) : 0;
+                        const code = typeof m.code === 'number' ? m.code :
+                            typeof m.code === 'string' ? parseInt(m.code, 10) :
+                                typeof m.code === 'object' && m.code ? parseInt(m.code.value, 10) : 0;
                         return !isNaN(code) && code < 2000;
                     }
                     return false;
                 });
                 // Only update if we filtered something out
                 if (syntaxOnlyMarkers.length < allMarkers.length) {
-                    monaco.editor.setModelMarkers(model, 'javascript', 
+                    monaco.editor.setModelMarkers(model, 'javascript',
                         syntaxOnlyMarkers.filter(m => m.owner === 'javascript')
                     );
                 }

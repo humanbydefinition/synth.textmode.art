@@ -19,9 +19,9 @@ export function AboutTab() {
             url: "https://github.com/humanbydefinition/textmode.filters.js"
         },
         {
-            name: "synth.textmode.art",
-            description: "this web application",
-            url: "https://github.com/humanbydefinition/synth.textmode.art"
+            name: "@strudel/web",
+            description: "live coding algorithmic patterns",
+            url: "https://codeberg.org/uzu/strudel"
         }
     ];
 
@@ -32,7 +32,7 @@ export function AboutTab() {
                     <div className="p-5 text-left space-y-2">
                         <h2 className="text-xl font-bold text-white">synth.textmode.art</h2>
                         <p className="text-sm text-zinc-400 max-w-[90%]">
-                            a live coding environment for procedural text generation and ASCII synthesis.
+                            a live coding environment for procedural text generation, ASCII synthesis, and algorithmic patterns.
                         </p>
                     </div>
                     <div className="grid grid-cols-2 divide-x divide-white/5 border-t border-white/5 bg-zinc-900/40">

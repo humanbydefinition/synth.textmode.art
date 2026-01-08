@@ -13,12 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { cn } from '@/lib/utils';
-import type { AppSettings } from './SettingsDialog';
-import { PreferencesTab } from './SystemMenu/PreferencesTab';
-import { AboutTab } from './SystemMenu/AboutTab';
-import { LegalTab } from './SystemMenu/LegalTab';
-import { ShortcutsTab } from './SystemMenu/ShortcutsTab';
-import { ExamplesTab } from './SystemMenu/ExamplesTab';
+import type { AppSettings } from '@/types/app.types';
+import { PreferencesTab } from './tabs/PreferencesTab';
+import { AboutTab } from './tabs/AboutTab';
+import { LegalTab } from './tabs/LegalTab';
+import { ShortcutsTab } from './tabs/ShortcutsTab';
+import { ExamplesTab } from './tabs/ExamplesTab';
 
 export interface SystemMenuProps {
     settings: AppSettings;

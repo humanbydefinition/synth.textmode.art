@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import type { AppSettings } from '../SettingsDialog';
+import type { AppSettings } from '@/types/app.types';
 
 export interface PreferencesTabProps {
     settings: AppSettings;
