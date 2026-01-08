@@ -15,6 +15,8 @@ export interface AppSettings {
     fontSize: number;
     /** Whether UI overlays are visible */
     uiVisible: boolean;
+    /** Whether line numbers are shown in the editor */
+    lineNumbers: boolean;
 }
 
 /**
@@ -25,6 +27,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     glassEffect: true,
     fontSize: 16,
     uiVisible: true,
+    lineNumbers: false,
 };
 
 /**

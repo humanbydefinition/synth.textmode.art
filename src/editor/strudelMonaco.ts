@@ -20,6 +20,7 @@ export interface StrudelMonacoOptions {
     onIncreaseFontSize?: () => void;
     onDecreaseFontSize?: () => void;
     fontSize?: number;
+    lineNumbers?: boolean;
 }
 
 export interface StrudelMonacoInstance {
@@ -55,17 +56,19 @@ export function createStrudelMonacoEditor(options: StrudelMonacoOptions): Strude
     }
     model = monaco.editor.createModel(options.initialValue, 'javascript', modelUri);
 
+    const showLineNumbers = options.lineNumbers ?? false;
+
     const editor = monaco.editor.create(options.container, {
         model,
         theme: 'transparent-dark', // Reuse the theme defined in main monaco.ts
 
         // Minimal chrome
         minimap: { enabled: false },
-        lineNumbers: 'off',
+        lineNumbers: showLineNumbers ? 'on' : 'off',
         glyphMargin: false,
         folding: false,
-        lineDecorationsWidth: 0,
-        lineNumbersMinChars: 0,
+        lineDecorationsWidth: showLineNumbers ? 16 : 0,
+        lineNumbersMinChars: showLineNumbers ? 2 : 0,
         overviewRulerLanes: 0,
         overviewRulerBorder: false,
         hideCursorInOverviewRuler: true,

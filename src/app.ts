@@ -134,8 +134,11 @@ export class App {
         const textmodeCode = this.loadTextmodeCode();
         const strudelCode = this.loadStrudelCode();
 
-        // Create editor factory with current font size
-        this.editorFactory = new EditorFactory({ fontSize: this.settings.fontSize });
+        // Create editor factory with current font size and line numbers
+        this.editorFactory = new EditorFactory({
+            fontSize: this.settings.fontSize,
+            lineNumbers: this.settings.lineNumbers
+        });
 
         // Create textmode Monaco editor
         this.textmodeEditor = this.editorFactory.createTextmodeEditor(
@@ -334,6 +337,11 @@ export class App {
         this.settings = settings;
         this.saveSettings(settings);
 
+        // Update editor factory for future editors
+        if (this.editorFactory) {
+            this.editorFactory.setLineNumbers(settings.lineNumbers);
+        }
+
         // Toggle glass effect on both editors
         if (this.textmodeEditorContainer) {
             if (settings.glassEffect) {
@@ -350,12 +358,19 @@ export class App {
             }
         }
 
-        // Apply font size to both editors
+        // Apply settings to both editors (font size + line numbers)
+        const editorOptions = {
+            fontSize: settings.fontSize,
+            lineNumbers: settings.lineNumbers ? 'on' as const : 'off' as const,
+            lineNumbersMinChars: settings.lineNumbers ? 2 : 0,
+            lineDecorationsWidth: settings.lineNumbers ? 16 : 0,
+        };
+
         if (this.textmodeEditor) {
-            this.textmodeEditor.updateOptions({ fontSize: settings.fontSize });
+            this.textmodeEditor.updateOptions(editorOptions);
         }
         if (this.strudelEditor) {
-            this.strudelEditor.updateOptions({ fontSize: settings.fontSize });
+            this.strudelEditor.updateOptions(editorOptions);
         }
 
         this.renderOverlay();

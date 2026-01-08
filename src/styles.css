@@ -80,26 +80,40 @@ html {
 .monaco-editor .margin,
 .monaco-editor-background,
 .monaco-editor .inputarea.ime-input,
-.monaco-editor .view-lines {
-  background: transparent !important;
-}
-
-/* Ensure view lines have no background */
+.monaco-editor .view-lines,
 .monaco-editor .view-line {
   background: transparent !important;
 }
 
 /* ===== TEXT-ONLY BACKGROUND EFFECT ===== */
+/* 
+ * Background strategy:
+ * - .view-lines has PERMANENT 12px padding-left (prevents shadow clipping, keeps position stable)
+ * - Code spans have inline backgrounds
+ * - The first span uses a -12px box-shadow to bridge the gap created by padding
+ */
+
+/* Always apply shadow room padding for consistent text position */
+.monaco-editor .view-lines {
+  padding-left: 12px;
+}
+
 /* Apply dark background only to the text spans themselves */
 #editor-container.glass-effect .monaco-editor .view-line>span,
 #strudel-editor-container.glass-effect .monaco-editor .view-line>span {
   background: rgba(0, 0, 0, 0.7);
-  border-radius: 2px;
+  border-radius: 0;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
 
-/* Without glass effect, use strong text shadows for readability */
+/* Extend the first span's background to the left to bridge the padding gap */
+#editor-container.glass-effect .monaco-editor .view-line>span:first-child,
+#strudel-editor-container.glass-effect .monaco-editor .view-line>span:first-child {
+  box-shadow: -12px 0 0 0 rgba(0, 0, 0, 0.7);
+}
+
+/* Without glass effect, code text has shadows for readability */
 #editor-container:not(.glass-effect) .monaco-editor .view-line span,
 #strudel-editor-container:not(.glass-effect) .monaco-editor .view-line span {
   text-shadow:
@@ -482,4 +496,41 @@ html {
 
 .audio-init-prompt button:hover {
   background: rgba(139, 92, 246, 1);
+}
+
+/* Line numbers styling - match text background if enabled */
+#editor-container.glass-effect .monaco-editor .line-numbers,
+#strudel-editor-container.glass-effect .monaco-editor .line-numbers {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 0 !important;
+  /* Explicitly no roundedness */
+  text-align: right;
+  padding-right: 4px;
+  padding-left: 4px;
+  /* Space between number and code - matches Monaco lineDecorationsWidth */
+  border-right: 16px solid transparent;
+  /* Connect background through the Monaco gutter (transparent border allows background-clip: border-box to show) */
+  box-sizing: content-box;
+  background-clip: border-box;
+}
+
+/* Without glass effect, line numbers need readability shadow */
+#editor-container:not(.glass-effect) .monaco-editor .line-numbers,
+#strudel-editor-container:not(.glass-effect) .monaco-editor .line-numbers {
+  text-shadow:
+    0 0 6px rgba(0, 0, 0, 1),
+    0 0 12px rgba(0, 0, 0, 0.95),
+    1px 1px 4px rgba(0, 0, 0, 1);
+
+  border-radius: 0 !important;
+  /* Explicitly no roundedness */
+  text-align: right;
+  padding-right: 4px;
+  padding-left: 4px;
+  /* Space between number and code - 16px Monaco gutter + 12px view-lines padding */
+  border-right: 28px solid transparent;
+  /* Connect background through the gap (transparent border allows background-clip: border-box to show) */
+  box-sizing: content-box;
+  /* Ensure border adds to visual width without breaking layout */
+  background-clip: border-box;
 }

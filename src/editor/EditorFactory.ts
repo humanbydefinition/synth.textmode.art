@@ -40,6 +40,8 @@ export interface StrudelEditorCallbacks extends CommonEditorCallbacks {
 export interface EditorFactoryConfig {
     /** Font size setting for editors */
     fontSize?: number;
+    /** Whether line numbers are enabled */
+    lineNumbers?: boolean;
 }
 
 /**
@@ -65,6 +67,9 @@ export interface IEditorFactory {
 
     /** Get current font size */
     getFontSize(): number;
+
+    /** Set line numbers setting for new editors */
+    setLineNumbers(enabled: boolean): void;
 }
 
 /**
@@ -72,9 +77,11 @@ export interface IEditorFactory {
  */
 export class EditorFactory implements IEditorFactory {
     private fontSize: number;
+    private lineNumbers: boolean;
 
     constructor(config?: EditorFactoryConfig) {
         this.fontSize = config?.fontSize ?? 14;
+        this.lineNumbers = config?.lineNumbers ?? false;
     }
 
     /**
@@ -97,6 +104,7 @@ export class EditorFactory implements IEditorFactory {
             onIncreaseFontSize: callbacks.onIncreaseFontSize,
             onDecreaseFontSize: callbacks.onDecreaseFontSize,
             fontSize: this.fontSize,
+            lineNumbers: this.lineNumbers,
         };
         return createMonacoEditor(options);
     }
@@ -119,6 +127,7 @@ export class EditorFactory implements IEditorFactory {
             onIncreaseFontSize: callbacks.onIncreaseFontSize,
             onDecreaseFontSize: callbacks.onDecreaseFontSize,
             fontSize: this.fontSize,
+            lineNumbers: this.lineNumbers,
         };
         return createStrudelMonacoEditor(options);
     }
@@ -135,6 +144,13 @@ export class EditorFactory implements IEditorFactory {
      */
     getFontSize(): number {
         return this.fontSize;
+    }
+
+    /**
+     * Set line numbers setting for new editors.
+     */
+    setLineNumbers(enabled: boolean): void {
+        this.lineNumbers = enabled;
     }
 }
 
