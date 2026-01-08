@@ -87,16 +87,18 @@ html {
 
 /* ===== TEXT-ONLY BACKGROUND EFFECT ===== */
 /* 
+/* 
  * Background strategy:
- * - .view-lines has PERMANENT 12px padding-left (prevents shadow clipping, keeps position stable)
- * - Code spans have inline backgrounds
- * - The first span uses a -12px box-shadow to bridge the gap created by padding
+ * - .view-line has PERMANENT 10px text-indent (pushes text right to create shadow safe zone)
+ * - NO padding used (as requested)
+ * - The first span uses a -10px box-shadow to bridge the gap created by indent
  */
 
-/* Always apply shadow room padding for consistent text position (bad solution, not to use) */
-/* .monaco-editor .view-lines {
-  padding-left: 12px;
-} */
+/* Use text-indent to push text right without padding adjustments */
+.monaco-editor .view-line {
+  text-indent: 4px !important;
+}
+
 
 /* Apply dark background only to the text spans themselves */
 #editor-container.glass-effect .monaco-editor .view-line>span,
@@ -107,10 +109,10 @@ html {
   -webkit-box-decoration-break: clone;
 }
 
-/* Extend the first span's background to the left to bridge the padding gap */
-#editor-container.glass-effect .monaco-editor .view-line>span:first-child,
-#strudel-editor-container.glass-effect .monaco-editor .view-line>span:first-child {
-  box-shadow: -12px 0 0 0 rgba(0, 0, 0, 0.7);
+/* Extend the first span's background to the left to bridge the indent gap */
+#editor-container.glass-effect .monaco-editor .view-line>span:first-child:not(:empty),
+#strudel-editor-container.glass-effect .monaco-editor .view-line>span:first-child:not(:empty) {
+  box-shadow: -4px 0 0 0 rgba(0, 0, 0, 0.7);
 }
 
 /* Without glass effect, code text has shadows for readability */
