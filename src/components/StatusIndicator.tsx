@@ -6,8 +6,10 @@ import {
     PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import type { StatusState } from '@/types/app.types';
 
-export type StatusState = 'ready' | 'running' | 'error' | 'updated';
+// Re-export for backward compatibility
+export type { StatusState } from '@/types/app.types';
 
 interface StatusIndicatorProps {
     status: StatusState;

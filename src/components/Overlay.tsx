@@ -1,17 +1,15 @@
 import { useState, type RefObject } from 'react';
-import { StatusIndicator, type StatusState } from './StatusIndicator';
+import { StatusIndicator } from './StatusIndicator';
 import { SystemMenu } from './SystemMenu';
-import type { AppSettings } from './SettingsDialog'; // Keeping this import for the type
-import { ErrorOverlay, type ErrorInfo } from './ErrorOverlay';
+import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeModal } from './WelcomeModal';
 import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
 import { MobileTabBar } from './AudioControls';
 import { cn } from '@/lib/utils';
+import type { StatusState, AppSettings, ErrorInfo, AudioState } from '@/types/app.types';
 
-export interface AudioState {
-    isPlaying: boolean;
-    isInitialized: boolean;
-}
+// Re-export types for backward compatibility
+export type { AudioState } from '@/types/app.types';
 
 interface OverlayProps {
     status: StatusState;
@@ -48,12 +46,16 @@ export function Overlay({
     onRevertToLastWorking,
     sonarRef,
     audioState,
-    onPlayAudio,
-    onHushAudio,
+    onPlayAudio: _onPlayAudio,
+    onHushAudio: _onHushAudio,
     isMobile = false,
     activePanel = 'textmode',
     onSelectPanel,
 }: OverlayProps) {
+    // Note: _onPlayAudio and _onHushAudio are currently unused but kept for future use
+    void _onPlayAudio;
+    void _onHushAudio;
+
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
     return (
@@ -86,8 +88,8 @@ export function Overlay({
                     onClearStorage={onClearStorage}
                     onLoadExample={onLoadExample}
                 />
-                <StatusIndicator 
-                    status={status} 
+                <StatusIndicator
+                    status={status}
                     isAudioPlaying={audioState?.isPlaying}
                 />
                 <ErrorOverlay
@@ -101,5 +103,6 @@ export function Overlay({
     );
 }
 
-export type { StatusState, AppSettings, ErrorInfo, MouseSonarHandle };
-
+// Re-export types for backward compatibility
+export type { StatusState, AppSettings, ErrorInfo } from '@/types/app.types';
+export type { MouseSonarHandle } from './MouseSonar';

@@ -1,13 +1,10 @@
 import { X, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import type { ErrorInfo } from '@/types/app.types';
 
-export interface ErrorInfo {
-    message: string;
-    stack?: string;
-    line?: number;
-    column?: number;
-}
+// Re-export for backward compatibility
+export type { ErrorInfo } from '@/types/app.types';
 
 interface ErrorOverlayProps {
     error: ErrorInfo | null;

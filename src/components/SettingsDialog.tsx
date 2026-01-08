@@ -12,13 +12,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import type { AppSettings } from '@/types/app.types';
 
-export interface AppSettings {
-    autoExecute: boolean;
-    glassEffect: boolean;
-    fontSize: number;
-    uiVisible: boolean;
-}
+// Re-export for backward compatibility
+export type { AppSettings } from '@/types/app.types';
 
 interface SettingsDialogProps {
     settings: AppSettings;
