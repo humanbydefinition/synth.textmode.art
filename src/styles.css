@@ -93,10 +93,10 @@ html {
  * - The first span uses a -12px box-shadow to bridge the gap created by padding
  */
 
-/* Always apply shadow room padding for consistent text position */
-.monaco-editor .view-lines {
+/* Always apply shadow room padding for consistent text position (bad solution, not to use) */
+/* .monaco-editor .view-lines {
   padding-left: 12px;
-}
+} */
 
 /* Apply dark background only to the text spans themselves */
 #editor-container.glass-effect .monaco-editor .view-line>span,
