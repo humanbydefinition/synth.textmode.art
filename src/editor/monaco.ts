@@ -186,7 +186,7 @@ export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorIn
         matchBrackets: 'never',
         occurrencesHighlight: 'off',
         selectionHighlight: false,
-        links: false,
+        links: true,
         colorDecorators: false,
 
         // Editor behavior

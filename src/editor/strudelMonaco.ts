@@ -95,7 +95,7 @@ export function createStrudelMonacoEditor(options: StrudelMonacoOptions): Strude
         matchBrackets: 'never',
         occurrencesHighlight: 'off',
         selectionHighlight: false,
-        links: false,
+        links: true,
         colorDecorators: false,
 
         // Editor behavior

@@ -1,7 +1,7 @@
 /**
  * Default Strudel sketch code for new users
  */
-export const defaultStrudelSketch = `// Strudel Live Coding - Audio
+export const defaultStrudelSketch = `// Live coding with strudel
 // Ctrl+Enter = run · Ctrl+. = stop (hush)
 // Docs: https://strudel.cc
 
@@ -12,7 +12,7 @@ stack(
     .gain(0.8)
     .lpf(2000),
 
-  // Melodic pattern (remove this line to hear drums only)
+  // Melodic pattern
   note("c3 eb3 g3 bb3")
     .s("sawtooth")
     .lpf(800)

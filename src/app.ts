@@ -11,7 +11,7 @@ import { HostRuntime } from './live/hostRuntime';
 import { StrudelRuntime } from './live/strudel';
 import { defaultSketch } from './live/defaultSketch';
 import { defaultStrudelSketch } from './live/defaultStrudelSketch';
-import { setCodeToHash, getShareableUrl } from './live/share';
+import { setCodesToHash, getCombinedShareableUrl } from './live/share';
 import { Overlay, type MouseSonarHandle } from './components/Overlay';
 import { DEFAULT_SETTINGS, type StatusState, type AppSettings, type ErrorInfo, type AudioState } from './types/app.types';
 import { storageService, type IStorageService } from './services/StorageService';
@@ -181,6 +181,7 @@ export class App {
                 getEditor: () => this.textmodeEditor,
                 getRuntime: () => this.textmodeRuntime,
                 getAutoExecute: () => this.settings.autoExecute,
+                getAutoExecuteDelay: () => this.settings.autoExecuteDelay,
             }
         );
 
@@ -195,6 +196,7 @@ export class App {
                 getEditor: () => this.strudelEditor,
                 getRuntime: () => this.strudelRuntime,
                 getAutoExecute: () => this.settings.autoExecute,
+                getAutoExecuteDelay: () => this.settings.autoExecuteDelay,
             }
         );
 
@@ -377,12 +379,13 @@ export class App {
     }
 
     /**
-     * Handle share button (shares textmode code)
+     * Handle share button (shares both textmode and strudel code)
      */
     private handleShare(): void {
-        const code = this.textmodeEditor?.getValue() ?? '';
-        const url = getShareableUrl(code);
-        setCodeToHash(code);
+        const textmodeCode = this.textmodeEditor?.getValue() ?? '';
+        const strudelCode = this.strudelEditor?.getValue() ?? '';
+        const url = getCombinedShareableUrl(textmodeCode, strudelCode);
+        setCodesToHash(textmodeCode, strudelCode);
         navigator.clipboard.writeText(url).catch(() => {
             console.log('Share URL:', url);
         });

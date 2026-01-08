@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Copy, Check, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -54,6 +55,29 @@ export function PreferencesTab({
                         />
                     </div>
 
+                    {/* Auto Execute Delay (only visible when auto-execute is on) */}
+                    {settings.autoExecute && (
+                        <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5 ml-8 border-l-2 border-l-blue-500/20">
+                            <div className="flex items-center gap-4 flex-1">
+                                <div>
+                                    <Label className="text-sm font-medium text-white block">debounce delay</Label>
+                                    <p className="text-xs text-zinc-500">wait {settings.autoExecuteDelay}ms before running</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 w-40">
+                                <span className="text-xs text-zinc-500 font-mono">100ms</span>
+                                <Slider
+                                    value={[settings.autoExecuteDelay ?? 500]}
+                                    min={100}
+                                    max={2000}
+                                    step={100}
+                                    onValueChange={(values) => onSettingsChange({ ...settings, autoExecuteDelay: values[0] })}
+                                />
+                                <span className="text-xs text-zinc-500 font-mono">2s</span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Text Background Toggle */}
                     <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
                         <div className="flex items-center gap-4">
@@ -70,33 +94,6 @@ export function PreferencesTab({
                             checked={settings.glassEffect}
                             onCheckedChange={(checked) => onSettingsChange({ ...settings, glassEffect: checked })}
                         />
-                    </div>
-
-                    {/* Font Size Control */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400">
-                                <Monitor className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <Label htmlFor="font-size" className="text-sm font-medium text-white block">font size</Label>
-                                <p className="text-xs text-zinc-500">editor text size ({settings.fontSize}px)</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs text-zinc-500 font-mono">10</span>
-                            <input
-                                id="font-size"
-                                type="range"
-                                min="10"
-                                max="32"
-                                step="1"
-                                value={settings.fontSize}
-                                onChange={(e) => onSettingsChange({ ...settings, fontSize: parseInt(e.target.value) })}
-                                className="w-32 h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-emerald-500 hover:accent-emerald-400 transition-all [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-emerald-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                            />
-                            <span className="text-xs text-zinc-500 font-mono">32</span>
-                        </div>
                     </div>
 
                     {/* Line Numbers Toggle */}
@@ -116,6 +113,32 @@ export function PreferencesTab({
                             onCheckedChange={(checked) => onSettingsChange({ ...settings, lineNumbers: checked })}
                         />
                     </div>
+
+                    {/* Font Size Control */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/30 border border-white/5">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400">
+                                <Monitor className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <Label htmlFor="font-size" className="text-sm font-medium text-white block">font size</Label>
+                                <p className="text-xs text-zinc-500">editor text size ({settings.fontSize}px)</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3 w-40">
+                            <span className="text-xs text-zinc-500 font-mono">10</span>
+                            <Slider
+                                value={[settings.fontSize]}
+                                min={10}
+                                max={32}
+                                step={1}
+                                onValueChange={(values) => onSettingsChange({ ...settings, fontSize: values[0] })}
+                            />
+                            <span className="text-xs text-zinc-500 font-mono">32</span>
+                        </div>
+                    </div>
+
+                    
                 </div>
 
                 <Separator className="bg-white/5" />

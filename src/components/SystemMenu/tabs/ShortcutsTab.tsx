@@ -15,7 +15,8 @@ export function ShortcutsTab() {
             title: "Editor Control",
             shortcuts: [
                 { keys: ["Ctrl", "Enter"], description: "run code / apply changes" },
-                { keys: ["Ctrl", "Shift", "R"], description: "hard reset (clear state)" },
+                { keys: ["Ctrl", "."], description: "hush audio (stop strudel)" },
+                { keys: ["Ctrl", "Shift", "R"], description: "hard reset (textmode only)" },
             ]
         },
         {

@@ -4,7 +4,7 @@
  */
 
 import { DEFAULT_SETTINGS, type AppSettings } from '@/types/app.types';
-import { getCodeFromHash } from '@/live/share';
+import { getCodesFromHash } from '@/live/share';
 import { defaultSketch } from '@/live/defaultSketch';
 import { defaultStrudelSketch } from '@/live/defaultStrudelSketch';
 
@@ -43,7 +43,7 @@ export class StorageService implements IStorageService {
      */
     loadTextmodeCode(): string {
         // First check URL hash for shared code
-        const hashCode = getCodeFromHash();
+        const { textmodeCode: hashCode } = getCodesFromHash();
         if (hashCode) return hashCode;
 
         // Then check localStorage
@@ -62,12 +62,19 @@ export class StorageService implements IStorageService {
     }
 
     /**
-     * Load strudel code from localStorage or use default.
+     * Load strudel code from URL hash, localStorage, or use default.
+     * Priority: URL hash > localStorage > default sketch
      */
     loadStrudelCode(): string {
+        // First check URL hash for shared code
+        const { strudelCode: hashCode } = getCodesFromHash();
+        if (hashCode) return hashCode;
+
+        // Then check localStorage
         const storedCode = localStorage.getItem(STRUDEL_CODE_KEY);
         if (storedCode) return storedCode;
 
+        // Fall back to default
         return defaultStrudelSketch;
     }
 

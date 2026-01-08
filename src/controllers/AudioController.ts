@@ -40,6 +40,8 @@ export interface AudioControllerDependencies {
     getRuntime: () => StrudelRuntime | null;
     /** Get current auto-execute setting */
     getAutoExecute: () => boolean;
+    /** Get current auto-execute delay in ms */
+    getAutoExecuteDelay: () => number;
 }
 
 /**
@@ -75,6 +77,7 @@ export class AudioController implements IAudioController {
     private readonly callbacks: AudioControllerCallbacks;
     private readonly deps: AudioControllerDependencies;
     private autoInitListener: (() => void) | null = null;
+    private debounceTimer: number | null = null;
 
     constructor(
         callbacks: AudioControllerCallbacks,
@@ -89,9 +92,18 @@ export class AudioController implements IAudioController {
      */
     handleCodeChange(code: string): void {
         this.callbacks.onSaveCode(code);
+
+        if (this.debounceTimer) {
+            window.clearTimeout(this.debounceTimer);
+            this.debounceTimer = null;
+        }
+
         const audioState = this.deps.appState.getAudioState();
         if (this.deps.getAutoExecute() && audioState.isInitialized) {
-            this.deps.getRuntime()?.evaluate(code);
+            this.debounceTimer = window.setTimeout(() => {
+                this.deps.getRuntime()?.evaluate(code);
+                this.debounceTimer = null;
+            }, this.deps.getAutoExecuteDelay());
         }
     }
 

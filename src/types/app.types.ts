@@ -17,6 +17,8 @@ export interface AppSettings {
     uiVisible: boolean;
     /** Whether line numbers are shown in the editor */
     lineNumbers: boolean;
+    /** Delay in milliseconds before auto-executing code */
+    autoExecuteDelay: number;
 }
 
 /**
@@ -28,6 +30,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     fontSize: 16,
     uiVisible: true,
     lineNumbers: false,
+    autoExecuteDelay: 500,
 };
 
 /**

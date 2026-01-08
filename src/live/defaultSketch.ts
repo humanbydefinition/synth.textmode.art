@@ -1,9 +1,9 @@
 /**
  * Default example sketch code
  */
-export const defaultSketch = `// Live coding with textmode.synth.js
+export const defaultSketch = `// Live coding with textmode.js
 // Ctrl+Enter = run · Ctrl+Shift+R = hard reset
-// Repo: https://github.com/humanbydefinition/textmode.synth.js
+// Docs: https://code.textmode.art/
 
 t.fontSize(16);
 

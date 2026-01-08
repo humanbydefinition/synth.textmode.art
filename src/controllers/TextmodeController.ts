@@ -30,6 +30,8 @@ export interface TextmodeControllerDependencies {
     getRuntime: () => HostRuntime | null;
     /** Get current auto-execute setting */
     getAutoExecute: () => boolean;
+    /** Get current auto-execute delay in ms */
+    getAutoExecuteDelay: () => number;
 }
 
 /**
@@ -60,6 +62,7 @@ export interface ITextmodeController {
 export class TextmodeController implements ITextmodeController {
     private readonly callbacks: TextmodeControllerCallbacks;
     private readonly deps: TextmodeControllerDependencies;
+    private debounceTimer: number | null = null;
 
     constructor(
         callbacks: TextmodeControllerCallbacks,
@@ -74,8 +77,17 @@ export class TextmodeController implements ITextmodeController {
      */
     handleCodeChange(code: string): void {
         this.callbacks.onSaveCode(code);
+
+        if (this.debounceTimer) {
+            window.clearTimeout(this.debounceTimer);
+            this.debounceTimer = null;
+        }
+
         if (this.deps.getAutoExecute()) {
-            this.deps.getRuntime()?.runCode(code);
+            this.debounceTimer = window.setTimeout(() => {
+                this.deps.getRuntime()?.runCode(code);
+                this.debounceTimer = null;
+            }, this.deps.getAutoExecuteDelay());
         }
     }
 
