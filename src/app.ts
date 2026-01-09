@@ -75,9 +75,6 @@ export class App {
     private get audioState(): AudioState {
         return this.appState?.getAudioState() ?? { isPlaying: false, isInitialized: false };
     }
-    private setAudioState(partial: Partial<AudioState>): void {
-        (this.appState as AppState)?.setAudioState(partial);
-    }
 
     /**
      * Initialize the application

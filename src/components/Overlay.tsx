@@ -34,7 +34,6 @@ interface OverlayProps {
 }
 
 export function Overlay({
-    status,
     settings,
     error,
     hasLastWorking,
