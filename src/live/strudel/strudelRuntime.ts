@@ -19,8 +19,8 @@ export interface StrudelError {
 
 /** Minimal typing for Strudel Pattern for highlighting purposes */
 export interface StrudelHapLocation {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
+    start: number;
+    end: number;
 }
 
 export interface StrudelHap {
@@ -94,7 +94,7 @@ export class StrudelRuntime {
         try {
             // Dynamic import of @strudel/web
             const strudelWeb = await import('@strudel/web');
-            
+
             // initStrudel() returns the repl object with scheduler and state
             // Pass onEvalError callback to capture evaluation errors
             // (Strudel catches errors internally and calls this callback instead of throwing)
@@ -154,15 +154,15 @@ export class StrudelRuntime {
 
         // Reset error flag before evaluation
         this.evalErrorOccurred = false;
-        
+
         try {
             const result = await this.evaluateFn(code);
-            
+
             // If onEvalError was called, don't update pattern (error was handled)
             if (this.evalErrorOccurred) {
                 return;
             }
-            
+
             // The evaluate function returns the pattern
             this.currentPattern = result as StrudelPattern | null;
             this.isPlaying = true;

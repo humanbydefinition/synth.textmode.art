@@ -11,8 +11,8 @@ import * as monaco from 'monaco-editor';
  * This is what's stored in hap.context.locations
  */
 export interface HapLocation {
-    start: { line: number; column: number };
-    end: { line: number; column: number };
+    start: number;  // Character offset from start of document
+    end: number;    // Character offset from start of document
 }
 
 export interface Hap {
@@ -153,7 +153,7 @@ export class StrudelHighlighter {
                 // Check if this hap is currently active
                 if (currentCycle >= hapBegin && currentCycle < hapEnd) {
                     for (const location of hap.context.locations) {
-                        const key = `${location.start.line}:${location.start.column}-${location.end.line}:${location.end.column}`;
+                        const key = `${location.start}:${location.end}`;
 
                         // Keep the hap with the latest end time for each location
                         const existing = activeLocationsThisFrame.get(key);
@@ -208,12 +208,22 @@ export class StrudelHighlighter {
         key: string,
         hapEnd: number
     ): void {
+        // Validate location is within document
+        const docLength = model.getValueLength();
+        if (location.start < 0 || location.end > docLength || location.start >= location.end) {
+            return;
+        }
+
+        // Convert character offsets to Monaco positions
+        const startPos = model.getPositionAt(location.start);
+        const endPos = model.getPositionAt(location.end);
+
         // Create decoration range
         const range = new monaco.Range(
-            location.start.line,
-            location.start.column,
-            location.end.line,
-            location.end.column
+            startPos.lineNumber,
+            startPos.column,
+            endPos.lineNumber,
+            endPos.column
         );
 
         // Create the new decoration with outline style
