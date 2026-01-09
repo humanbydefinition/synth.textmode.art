@@ -124,15 +124,12 @@ t.layers.base.synth(
  * But this is ASCII art! We want to control the specialized characters themselves.
  *
  * By default, all characters in the selected font are used.
- *
- * We can change this in two ways:
- *
- * 1. \`.charMap(string)\`: Defines the pool of available characters.
- * 2. \`char(src, charCount)\`: The second parameter limits how many characters from that pool are used.
+ * 
+ * We can change this by using the \`.charMap()\` method, 
+ * which defines the pool of available characters.
  *
  * In this example:
  * - We start with a \`charMap\` of binary digits "01".
- * - We use \`char(src, 2)\` to tell the renderer we only want to pick from the first 2 characters.
  * - The source brightness is then mapped to indices 0 ('0') and 1 ('1').
  *
  * This allows for precise control. By changing the \`charMap\` to "/\\\\",
@@ -152,7 +149,7 @@ const matrixColor = solid(0, 1, 0)
   .mult(noise());
 
 t.layers.base.synth(
-  char(matrixData, 2)            // Use only the first 2 characters from the map
+  char(matrixData)
     .charMap('01')               // Define our alphabet as just '0' and '1'
     .charColor(matrixColor)      // Color them green
 );`,
