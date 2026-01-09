@@ -1,8 +1,8 @@
 /**
  * StrudelHighlighter - Real-time pattern highlighting for Strudel code
  * 
- * Shows which parts of the code are currently playing by highlighting
- * the corresponding code locations when haps (events) trigger.
+ * Uses duration-based highlighting: highlights remain visible for the entire
+ * duration of each hap (musical event), matching the official Strudel approach.
  */
 import * as monaco from 'monaco-editor';
 
@@ -35,40 +35,32 @@ export interface StrudelHighlighterOptions {
     editor: monaco.editor.IStandaloneCodeEditor;
     /** Lookahead time in cycles for querying pattern */
     lookahead?: number;
-    /** How long highlights remain visible (ms) */
-    highlightDuration?: number;
-    /** Default highlight color */
-    defaultColor?: string;
 }
 
-interface ActiveHighlight {
+interface ActiveDecoration {
     decorationId: string;
-    expiresAt: number;
+    hapEnd: number;  // Cycle time when this hap ends
 }
 
 /**
  * StrudelHighlighter manages real-time code highlighting
- * synchronized with pattern playback
+ * synchronized with pattern playback using duration-based tracking.
  */
 export class StrudelHighlighter {
     private editor: monaco.editor.IStandaloneCodeEditor;
     private pattern: Pattern | null = null;
     private getCycle: (() => number) | null = null;
     private animationFrameId: number | null = null;
-    private activeHighlights: Map<string, ActiveHighlight> = new Map();
-    private decorationCollection: monaco.editor.IEditorDecorationsCollection;
+    private activeDecorations: Map<string, ActiveDecoration> = new Map();
     private lookahead: number;
-    private highlightDuration: number;
-    private defaultColor: string;
     private isRunning = false;
-    private lastQueryCycle = -1;
+
+    // CSS class for all active highlights (no per-instance styles needed)
+    private static readonly HIGHLIGHT_CLASS = 'strudel-highlight-active';
 
     constructor(options: StrudelHighlighterOptions) {
         this.editor = options.editor;
         this.lookahead = options.lookahead ?? 0.1;
-        this.highlightDuration = options.highlightDuration ?? 300;
-        this.defaultColor = options.defaultColor ?? 'var(--strudel-highlight, #75baff)';
-        this.decorationCollection = this.editor.createDecorationsCollection([]);
     }
 
     /**
@@ -76,10 +68,7 @@ export class StrudelHighlighter {
      */
     setPattern(pattern: Pattern | null, _getTime: () => number, getCycle: () => number): void {
         this.pattern = pattern;
-        // Note: getTime is kept in the API for future use but currently only getCycle is needed
         this.getCycle = getCycle;
-        // Reset query tracking when pattern changes to ensure highlights work on replay
-        this.lastQueryCycle = -1;
         // Clear existing highlights when pattern changes
         this.clearAllHighlights();
     }
@@ -90,8 +79,6 @@ export class StrudelHighlighter {
     start(): void {
         if (this.isRunning) return;
         this.isRunning = true;
-        // Reset query tracking to ensure highlights work immediately
-        this.lastQueryCycle = -1;
         this.animate();
     }
 
@@ -111,8 +98,14 @@ export class StrudelHighlighter {
      * Clear all current highlights
      */
     clearAllHighlights(): void {
-        this.activeHighlights.clear();
-        this.decorationCollection.clear();
+        const model = this.editor.getModel();
+        if (model) {
+            const decorationIds = Array.from(this.activeDecorations.values()).map(d => d.decorationId);
+            if (decorationIds.length > 0) {
+                model.deltaDecorations(decorationIds, []);
+            }
+        }
+        this.activeDecorations.clear();
     }
 
     /**
@@ -126,49 +119,79 @@ export class StrudelHighlighter {
     };
 
     /**
-     * Query pattern for current haps and update editor decorations
+     * Query pattern for current haps and update editor decorations.
+     * Uses duration-based highlighting: shows highlights for haps that are
+     * currently active (currentCycle is between hap.whole.begin and hap.whole.end).
      */
     private updateHighlights(): void {
-        const now = Date.now();
         const model = this.editor.getModel();
-        
+
         if (!model || !this.pattern || !this.getCycle) {
             return;
         }
 
         try {
             const currentCycle = this.getCycle();
-            
-            // Only query if we've moved forward in time
-            if (currentCycle > this.lastQueryCycle) {
-                // Query pattern for haps in the current time window
-                const haps = this.pattern.queryArc(
-                    Math.max(0, currentCycle - 0.01), 
-                    currentCycle + this.lookahead
-                );
 
-                // Process each hap
-                for (const hap of haps) {
-                    if (!hap.hasOnset?.() || !hap.context?.locations) continue;
+            // Track which locations should be active this frame
+            const activeLocationsThisFrame = new Map<string, { location: HapLocation; hapEnd: number; color?: string }>();
 
+            // Query pattern for haps around current time
+            // Look back slightly to catch ongoing haps and ahead for lookahead
+            const haps = this.pattern.queryArc(
+                Math.max(0, currentCycle - 1), // Look back 1 cycle to catch ongoing haps
+                currentCycle + this.lookahead
+            );
+
+            // Find all haps that are currently active (current time is within their duration)
+            for (const hap of haps) {
+                if (!hap.whole || !hap.context?.locations) continue;
+
+                const hapBegin = hap.whole.begin.valueOf();
+                const hapEnd = hap.whole.end.valueOf();
+
+                // Check if this hap is currently active
+                if (currentCycle >= hapBegin && currentCycle < hapEnd) {
                     for (const location of hap.context.locations) {
-                        // Location is {start: number, end: number} - character offsets
                         const key = `${location.start}:${location.end}`;
-                        
-                        // Skip if already highlighted recently
-                        const existing = this.activeHighlights.get(key);
-                        if (existing && existing.expiresAt > now) continue;
 
-                        // Create new highlight
-                        this.addHighlight(location, hap.value?.color);
+                        // Keep the hap with the latest end time for each location
+                        const existing = activeLocationsThisFrame.get(key);
+                        if (!existing || hapEnd > existing.hapEnd) {
+                            activeLocationsThisFrame.set(key, {
+                                location,
+                                hapEnd,
+                                color: hap.value?.color
+                            });
+                        }
                     }
                 }
-
-                this.lastQueryCycle = currentCycle;
             }
 
-            // Remove expired highlights
-            this.cleanupExpiredHighlights(now);
+            // Remove decorations for locations that are no longer active
+            const toRemove: string[] = [];
+            const decorationIdsToRemove: string[] = [];
+
+            for (const [key, decoration] of this.activeDecorations) {
+                if (!activeLocationsThisFrame.has(key)) {
+                    toRemove.push(key);
+                    decorationIdsToRemove.push(decoration.decorationId);
+                }
+            }
+
+            if (decorationIdsToRemove.length > 0) {
+                model.deltaDecorations(decorationIdsToRemove, []);
+                for (const key of toRemove) {
+                    this.activeDecorations.delete(key);
+                }
+            }
+
+            // Add decorations for newly active locations
+            for (const [key, { location, hapEnd }] of activeLocationsThisFrame) {
+                if (!this.activeDecorations.has(key)) {
+                    this.addDecoration(model, location, key, hapEnd);
+                }
+            }
 
         } catch (error) {
             // Pattern query can fail during code changes - ignore silently
@@ -177,35 +200,23 @@ export class StrudelHighlighter {
     }
 
     /**
-     * Convert character offset to Monaco position
+     * Add a decoration at the specified location
      */
-    private offsetToPosition(model: monaco.editor.ITextModel, offset: number): monaco.Position {
-        // Monaco models have a method for this
-        return model.getPositionAt(offset);
-    }
-
-    /**
-     * Add a highlight decoration at the specified location
-     */
-    private addHighlight(location: HapLocation, color?: string): void {
-        const model = this.editor.getModel();
-        if (!model) return;
-
-        // Key using character offsets
-        const key = `${location.start}:${location.end}`;
-        const now = Date.now();
-
-        // Remove existing highlight for this location
-        const existing = this.activeHighlights.get(key);
-        if (existing) {
-            // Refresh the expiration
-            existing.expiresAt = now + this.highlightDuration;
+    private addDecoration(
+        model: monaco.editor.ITextModel,
+        location: HapLocation,
+        key: string,
+        hapEnd: number
+    ): void {
+        // Validate location is within document
+        const docLength = model.getValueLength();
+        if (location.start < 0 || location.end > docLength || location.start >= location.end) {
             return;
         }
 
         // Convert character offsets to Monaco positions
-        const startPos = this.offsetToPosition(model, location.start);
-        const endPos = this.offsetToPosition(model, location.end);
+        const startPos = model.getPositionAt(location.start);
+        const endPos = model.getPositionAt(location.end);
 
         // Create decoration range
         const range = new monaco.Range(
@@ -215,132 +226,25 @@ export class StrudelHighlighter {
             endPos.column
         );
 
-        // Validate range is within document
-        const docLength = model.getValueLength();
-        if (location.start < 0 || location.end > docLength || location.start >= location.end) {
-            return;
-        }
-
-        // Create the highlight color
-        const highlightColor = color || this.defaultColor;
-        
-        // Generate unique class name for this highlight's CSS
-        const className = `strudel-highlight-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-
-        // Add CSS for this specific highlight (with animation)
-        this.injectHighlightStyle(className, highlightColor);
-
-        // Create the new decoration
+        // Create the new decoration with outline style
         const newDecoration: monaco.editor.IModelDeltaDecoration = {
             range,
             options: {
-                className,
-                inlineClassName: className,
+                className: StrudelHighlighter.HIGHLIGHT_CLASS,
+                inlineClassName: StrudelHighlighter.HIGHLIGHT_CLASS,
                 stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges,
             }
         };
 
-        // Add to collection
+        // Add to model
         const ids = model.deltaDecorations([], [newDecoration]);
-        
+
         if (ids.length > 0) {
-            this.activeHighlights.set(key, {
+            this.activeDecorations.set(key, {
                 decorationId: ids[0],
-                expiresAt: now + this.highlightDuration,
+                hapEnd,
             });
-
-            // Schedule cleanup of CSS after animation
-            setTimeout(() => {
-                this.removeHighlightStyle(className);
-            }, this.highlightDuration + 100);
         }
-    }
-
-    /**
-     * Inject CSS for a specific highlight with fade animation
-     */
-    private injectHighlightStyle(className: string, color: string): void {
-        const style = document.createElement('style');
-        style.id = `strudel-style-${className}`;
-        style.textContent = `
-            .${className} {
-                background-color: ${this.hexToRgba(color, 0.5)};
-                border-radius: 2px;
-                animation: strudel-flash ${this.highlightDuration}ms ease-out forwards;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    /**
-     * Remove injected CSS for a highlight
-     */
-    private removeHighlightStyle(className: string): void {
-        const style = document.getElementById(`strudel-style-${className}`);
-        if (style) {
-            style.remove();
-        }
-    }
-
-    /**
-     * Clean up expired highlight decorations
-     */
-    private cleanupExpiredHighlights(now: number): void {
-        const model = this.editor.getModel();
-        if (!model) return;
-
-        const expired: string[] = [];
-        const decorationIds: string[] = [];
-
-        for (const [key, highlight] of this.activeHighlights) {
-            if (highlight.expiresAt <= now) {
-                expired.push(key);
-                decorationIds.push(highlight.decorationId);
-            }
-        }
-
-        // Remove expired decorations
-        if (decorationIds.length > 0) {
-            model.deltaDecorations(decorationIds, []);
-        }
-
-        // Remove from tracking
-        for (const key of expired) {
-            this.activeHighlights.delete(key);
-        }
-    }
-
-    /**
-     * Convert color to rgba with alpha
-     */
-    private hexToRgba(color: string, alpha: number): string {
-        // Handle CSS variables
-        if (color.startsWith('var(')) {
-            return color.replace(')', `, ${alpha})`).replace('var(', 'var(');
-        }
-
-        // Handle hex colors
-        if (color.startsWith('#')) {
-            const hex = color.slice(1);
-            const bigint = parseInt(hex.length === 3 
-                ? hex.split('').map(c => c + c).join('')
-                : hex, 16);
-            const r = (bigint >> 16) & 255;
-            const g = (bigint >> 8) & 255;
-            const b = bigint & 255;
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-
-        // Handle rgb/rgba
-        if (color.startsWith('rgb')) {
-            if (color.startsWith('rgba')) {
-                return color;
-            }
-            return color.replace('rgb', 'rgba').replace(')', `, ${alpha})`);
-        }
-
-        // Named colors - just add transparency via background
-        return color;
     }
 
     /**
@@ -348,44 +252,28 @@ export class StrudelHighlighter {
      */
     dispose(): void {
         this.stop();
-        this.decorationCollection.clear();
     }
 }
 
 /**
- * CSS keyframes for the highlight animation (injected once)
+ * Inject global Strudel highlight styles (called once on init)
+ * Uses outline + glow for visibility on any background
  */
 export function injectStrudelHighlightStyles(): void {
-    if (document.getElementById('strudel-highlight-keyframes')) return;
+    if (document.getElementById('strudel-highlight-styles')) return;
 
     const style = document.createElement('style');
-    style.id = 'strudel-highlight-keyframes';
+    style.id = 'strudel-highlight-styles';
     style.textContent = `
-        @keyframes strudel-flash {
-            0% {
-                background-color: rgba(117, 186, 255, 0.7);
-                box-shadow: 0 0 10px rgba(117, 186, 255, 0.5);
-            }
-            50% {
-                background-color: rgba(117, 186, 255, 0.4);
-                box-shadow: 0 0 6px rgba(117, 186, 255, 0.3);
-            }
-            100% {
-                background-color: transparent;
-                box-shadow: none;
-            }
-        }
-
-        /* High-contrast outline style as alternative */
-        @keyframes strudel-outline {
-            0% {
-                outline: 2px solid rgba(117, 186, 255, 0.9);
-                outline-offset: 0px;
-            }
-            100% {
-                outline: 2px solid transparent;
-                outline-offset: 2px;
-            }
+        .strudel-highlight-active {
+            background-color: rgba(117, 186, 255, 0.2);
+            outline: 1.5px solid rgba(117, 186, 255, 0.9);
+            outline-offset: 1px;
+            box-shadow: 
+                0 0 6px rgba(117, 186, 255, 0.8),
+                0 0 12px rgba(117, 186, 255, 0.4),
+                0 0 20px rgba(117, 186, 255, 0.2);
+            border-radius: 2px;
         }
     `;
     document.head.appendChild(style);

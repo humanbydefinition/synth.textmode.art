@@ -189,7 +189,6 @@ export function createStrudelMonacoEditor(options: StrudelMonacoOptions): Strude
     const highlighter = new StrudelHighlighter({
         editor,
         lookahead: 0.1,       // Query slightly ahead (in cycles)
-        highlightDuration: 300, // Flash duration in ms (longer = more visible)
     });
 
     return {

@@ -123,7 +123,7 @@ t.layers.base.synth(
  * So far, we've focused on changing *pixel* values (colors, brightness).
  * But this is ASCII art! We want to control the specialized characters themselves.
  *
- * By default, textmode.js uses a standard density string " .:-=+*#%@" for mapping brightness to characters.
+ * By default, all characters in the selected font are used.
  *
  * We can change this in two ways:
  *
@@ -135,7 +135,7 @@ t.layers.base.synth(
  * - We use \`char(src, 2)\` to tell the renderer we only want to pick from the first 2 characters.
  * - The source brightness is then mapped to indices 0 ('0') and 1 ('1').
  *
- * This allows for precise control. By changing the \`charMap\` to " /\\" and the count to 3,
+ * This allows for precise control. By changing the \`charMap\` to "/\\\\",
  * we could create mazes or geometric patterns!
  *
  * Try changing the charMap string below to " ." to see a simple dot matrix,
@@ -149,7 +149,7 @@ const matrixData = noise(4, 0.2)
 
 // Bright green matrix colors
 const matrixColor = solid(0, 1, 0)
-  .mult(osc(10, 0.1, 0.5));
+  .mult(noise());
 
 t.layers.base.synth(
   char(matrixData, 2)            // Use only the first 2 characters from the map
