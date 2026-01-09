@@ -8,7 +8,8 @@ import { TextmodeManager } from './TextmodeManager';
 import { FrameScheduler } from './FrameScheduler';
 import { ExecutionContext } from './ExecutionContext';
 import { ErrorReporter } from './ErrorReporter';
-import type { ParentToRunnerMessage, RunnerToParentMessage } from '../protocol';
+import { AudioReceiver } from './AudioReceiver';
+import type { ParentToRunnerMessage, RunnerToParentMessage, AudioDataMessage } from '../protocol';
 
 /**
  * Main runner class that orchestrates the execution environment
@@ -18,6 +19,7 @@ class Runner {
     private scheduler: FrameScheduler;
     private context: ExecutionContext;
     private errorReporter: ErrorReporter;
+    private audioReceiver: AudioReceiver;
 
     /** Last successfully executed code - used for error recovery */
     private lastWorkingCode: string | null = null;
@@ -25,6 +27,7 @@ class Runner {
     constructor() {
         this.errorReporter = new ErrorReporter();
         this.textmode = new TextmodeManager();
+        this.audioReceiver = new AudioReceiver();
 
         this.scheduler = new FrameScheduler({
             isRendering: () => this.textmode.isRendering(),
@@ -34,6 +37,7 @@ class Runner {
         this.context = new ExecutionContext({
             getTextmode: () => this.textmode.getInstance(),
             errorReporter: this.errorReporter,
+            audioReceiver: this.audioReceiver,
         });
     }
 
@@ -88,6 +92,9 @@ class Runner {
                 break;
             case 'SOFT_RESET':
                 this.executeCode(msg.code, true);
+                break;
+            case 'AUDIO_DATA':
+                this.audioReceiver.update(msg as AudioDataMessage);
                 break;
         }
     };

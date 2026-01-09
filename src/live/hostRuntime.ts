@@ -1,9 +1,10 @@
 /**
  * HostRuntime - manages the iframe lifecycle and communication from the parent window.
  */
-import type { ParentToRunnerMessage } from './protocol';
+import type { ParentToRunnerMessage, AudioDataMessage } from './protocol';
 import { isRunnerMessage } from './protocol';
 import type { IHostRuntime, RuntimeError, HostRuntimeOptions } from './types';
+import type { AudioData } from './AudioAnalyser';
 
 // Re-export types for backward compatibility
 export type { HostRuntimeOptions } from './types';
@@ -112,6 +113,21 @@ export class HostRuntime implements IHostRuntime {
         if (this.iframe?.contentWindow) {
             this.iframe.contentWindow.postMessage(msg, '*');
         }
+    }
+
+    /**
+     * Send audio data to iframe for audio-reactive visuals
+     */
+    sendAudioData(data: AudioData): void {
+        if (!this.isReady) return;
+
+        const msg: AudioDataMessage = {
+            type: 'AUDIO_DATA',
+            fft: data.fft,
+            waveform: data.waveform,
+            timestamp: data.timestamp,
+        };
+        this.sendMessage(msg);
     }
 
     /**

@@ -319,6 +319,57 @@ t.layers.base.synth(
     .cellColor(colorShift.clone().invert().saturate(0.3))
 );`,
   },
+  {
+    id: 'audio-reactive',
+    name: 'Audio Reactive',
+    description: 'Visuals that react to Strudel audio',
+    category: 'advanced',
+    code: `/**
+ * Audio-Reactive Visuals
+ * 
+ * This example shows how to create visuals that respond to audio
+ * coming from the Strudel editor on the right panel.
+ * 
+ * IMPORTANT: To enable audio reactivity, add .analyze('main') to your 
+ * Strudel pattern, for example:
+ *   $: s("bd sd hh sd").analyze('main')
+ * 
+ * The 'audio' global provides:
+ *   - audio.bass()   - Low frequencies (0-1)
+ *   - audio.mid()    - Mid frequencies (0-1)  
+ *   - audio.high()   - High frequencies (0-1)
+ *   - audio.volume() - Overall volume (0-1)
+ *   - audio.fft()    - Raw frequency data (Uint8Array)
+ *   - audio.waveform() - Raw waveform data (Uint8Array)
+ */
+
+// Scale effect based on bass
+const bassScale = () => 1 + audio.bass() * 1.5;
+
+// Rotation based on mid frequencies
+const midRotation = () => audio.mid() * 0.3;
+
+// Color intensity based on high frequencies
+const highColor = () => audio.high();
+
+// Base pattern - concentric shapes
+const base = shape(6, () => 0.2 + audio.volume() * 0.3, 0.02)
+  .repeat(3, 3, 0.5, 0.5)
+  .scale(bassScale)
+  .rotate(midRotation);
+
+// Color driven by audio
+const colors = gradient()
+  .hue(() => audio.bass() * 0.5)
+  .saturate(() => 1 + audio.mid())
+  .colorama(() => highColor() * 0.3);
+
+t.layers.base.synth(
+  char(base)
+    .charColor(colors)
+    .cellColor(base.clone().invert().mult(colors, 0.3))
+);`,
+  },
 ];
 
 /**

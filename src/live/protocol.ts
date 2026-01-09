@@ -44,7 +44,21 @@ export interface SoftResetMessage {
     code: string;
 }
 
-export type ParentToRunnerMessage = RunCodeMessage | SoftResetMessage;
+/**
+ * Audio data message for audio-reactive visuals.
+ * Sent from parent window to iframe at 60fps with FFT and waveform data.
+ */
+export interface AudioDataMessage {
+    type: 'AUDIO_DATA';
+    /** Frequency domain data (0-255 per bin) */
+    fft: number[];
+    /** Time domain waveform data (0-255) */
+    waveform: number[];
+    /** Timestamp for synchronization */
+    timestamp: number;
+}
+
+export type ParentToRunnerMessage = RunCodeMessage | SoftResetMessage | AudioDataMessage;
 
 // Union of all messages
 export type Message = RunnerToParentMessage | ParentToRunnerMessage;

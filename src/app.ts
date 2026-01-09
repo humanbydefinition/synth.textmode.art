@@ -20,6 +20,7 @@ import { ShortcutsManager, type IShortcutsManager } from './shortcuts/ShortcutsM
 import { AppState, type IAppState } from './state/AppState';
 import { TextmodeController, type ITextmodeController } from './controllers/TextmodeController';
 import { AudioController, type IAudioController } from './controllers/AudioController';
+import { AudioAnalyser } from './live/AudioAnalyser';
 
 export class App {
     // Services
@@ -46,6 +47,9 @@ export class App {
     // React overlay
     private overlayRoot: Root | null = null;
     private sonarRef = createRef<MouseSonarHandle>();
+
+    // Audio analysis for audio-reactive visuals
+    private audioAnalyser: AudioAnalyser | null = null;
 
     // Convenience accessors (delegate to appState)
     private get status(): StatusState {
@@ -232,6 +236,15 @@ export class App {
             },
         });
         this.shortcuts.init();
+
+        // Create audio analyser for audio-reactive visuals
+        // Polls Strudel's AnalyserNode and sends data to iframe at 60fps
+        this.audioAnalyser = new AudioAnalyser({
+            onData: (data) => {
+                this.textmodeRuntime?.sendAudioData(data);
+            },
+        });
+        this.audioAnalyser.start();
 
         // Auto-initialize audio on first user interaction
         this.audioController.setupAutoAudioInit();
