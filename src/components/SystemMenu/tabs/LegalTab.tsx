@@ -54,14 +54,14 @@ export function LegalTab() {
                                 <div>
                                     <h4 className="font-medium text-zinc-200 mb-2">Introduction</h4>
                                     <p className="text-zinc-500">
-                                        synth.textmode.art is a live coding environment for creating real-time visuals with textmode.js. This application is hosted on a Virtual Private Server (VPS) provided by Hetzner. As service providers, Hetzner may collect certain technically necessary data (including IP addresses) in accordance with their privacy policy.
+                                        synth.textmode.art is a live coding environment for creating real-time visuals with textmode.js and audio patterns with Strudel. This application is hosted on a Virtual Private Server (VPS) provided by <a href="https://www.hetzner.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Hetzner</a>. As service providers, Hetzner may collect certain technically necessary data (including IP addresses) in accordance with their privacy policy.
                                     </p>
                                 </div>
 
                                 <div>
                                     <h4 className="font-medium text-zinc-200 mb-2">Analytics</h4>
                                     <p className="text-zinc-500">
-                                        We use Umami, a privacy-focused analytics tool, to collect anonymous usage statistics. Umami does not use cookies and does not collect any personally identifiable information. The following anonymous data may be collected:
+                                        We use <a href="https://umami.is/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Umami</a>, a privacy-focused analytics tool, to collect anonymous usage statistics. Umami does not use cookies and does not collect any personally identifiable information. The following anonymous data may be collected:
                                     </p>
                                     <ul className="list-disc list-inside mt-2 text-zinc-500">
                                         <li>Page views and referral sources</li>
@@ -71,6 +71,13 @@ export function LegalTab() {
                                     </ul>
                                     <p className="text-zinc-500 mt-2">
                                         As Umami does not use cookies and does not collect personal data, consent for this type of analytics is not required under GDPR.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-medium text-zinc-200 mb-2">External Resources (Audio, Images, Fonts)</h4>
+                                    <p className="text-zinc-500">
+                                        Both Strudel and textmode.js allow loading external resources such as audio samples, images, fonts, or videos from third-party Content Delivery Networks (CDNs) or servers. When you use these features or custom user scripts, your browser establishes a direct connection to these external providers to fetch the requested assets. This process involves the transmission of technically necessary data, such as your IP address, to the respective third-party provider.
                                     </p>
                                 </div>
 
@@ -106,18 +113,11 @@ export function LegalTab() {
                                     </p>
                                 </div>
 
-                                <div>
-                                    <h4 className="font-medium text-zinc-200 mb-2">Related Resources</h4>
-                                    <ul className="list-disc list-inside text-zinc-500">
-                                        <li><a href="https://www.hetzner.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Hetzner Privacy Policy</a></li>
-                                        <li><a href="https://umami.is/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Umami</a></li>
-                                    </ul>
-                                </div>
                             </div>
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
             </div>
-        </ScrollArea>
+        </ScrollArea >
     );
 }

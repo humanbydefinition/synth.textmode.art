@@ -5,6 +5,12 @@ export const defaultStrudelSketch = `// Live coding with strudel
 // Ctrl+Enter = run · Ctrl+. = stop (hush)
 // Docs: https://strudel.cc
 
+// Load a custom sample from a URL
+// This maps the name "conga" to a specific audio file
+// await samples({
+//   conga: 'https://glfmn.io/samples/menegass-conga-7.wav'
+// });
+
 // Use stack() to layer multiple patterns together
 stack(
   // Drum pattern

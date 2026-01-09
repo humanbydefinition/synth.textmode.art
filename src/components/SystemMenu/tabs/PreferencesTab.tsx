@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { Copy, Check, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered } from 'lucide-react';
+
+import { Copy, Trash2, Zap, ZapOff, Type, Monitor, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { AppSettings } from '@/types/app.types';
 
 export interface PreferencesTabProps {
@@ -19,17 +20,11 @@ export interface PreferencesTabProps {
 export function PreferencesTab({
     settings,
     onSettingsChange,
-    onShare,
+    onShare: _onShare,
     onClearStorage,
     onClose
 }: PreferencesTabProps) {
-    const [copied, setCopied] = useState(false);
 
-    const handleShare = () => {
-        onShare();
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
 
     return (
         <ScrollArea className="h-full">
@@ -138,7 +133,7 @@ export function PreferencesTab({
                         </div>
                     </div>
 
-                    
+
                 </div>
 
                 <Separator className="bg-white/5" />
@@ -146,14 +141,23 @@ export function PreferencesTab({
                 <div className="space-y-4">
                     <h3 className="text-sm font-medium text-zinc-400 uppercase tracking-wider">Storage</h3>
                     <div className="flex gap-3">
-                        <Button
-                            variant="outline"
-                            className="flex-1 justify-center gap-2 bg-zinc-900/50 border-zinc-800 hover:bg-zinc-800 hover:text-white text-zinc-400"
-                            onClick={handleShare}
-                        >
-                            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                            {copied ? "copied!" : "copy link"}
-                        </Button>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div className="flex-1">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-center gap-2 bg-zinc-900/50 border-zinc-800 text-zinc-500 opacity-50 cursor-not-allowed"
+                                        disabled
+                                    >
+                                        <Copy className="w-4 h-4" />
+                                        copy link
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>sharing is temporarily disabled for security maintenance</p>
+                            </TooltipContent>
+                        </Tooltip>
                         <Button
                             variant="destructive"
                             className="flex-1 justify-center gap-2 bg-red-950/30 border-red-900/50 hover:bg-red-900/50 text-red-400"
