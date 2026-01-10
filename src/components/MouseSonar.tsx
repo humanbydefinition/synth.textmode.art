@@ -1,27 +1,134 @@
-import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 
 export interface MouseSonarHandle {
     ping: () => void;
 }
 
-interface RingState {
-    id: number;
-    x: number;
-    y: number;
-}
-
 /**
- * MouseSonar - A macOS-style "Find My Cursor" visual effect.
- * Renders expanding/fading concentric rings at the mouse position when triggered.
+ * MouseSonar - A macOS-style "Shake to Find" visual effect.
+ * Renders a large cursor that grows in opacity/size when the mouse is shaken.
  */
 export const MouseSonar = forwardRef<MouseSonarHandle>((_, ref) => {
-    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-    const [rings, setRings] = useState<RingState[]>([]);
+    const cursorRef = useRef<HTMLDivElement>(null);
+    const wasVisible = useRef(false);
+
+    // Mutable state for the animation loop
+    const state = useRef({
+        x: 0,
+        y: 0,
+        lastX: 0,
+        lastY: 0,
+        velocity: 0,
+        shakeScore: 0,
+        scale: 0.166, // Start at 1/6th scale (32px / 192px)
+        visible: false
+    });
+
+    const rafId = useRef<number>(0);
+
+    // Initial position setup
+    useEffect(() => {
+        state.current.x = window.innerWidth / 2;
+        state.current.y = window.innerHeight / 2;
+
+        // Cleanup cursor hide on unmount
+        return () => {
+            document.body.style.cursor = '';
+        };
+    }, []);
+
+    // Animation loop
+    useEffect(() => {
+        let lastTime = performance.now();
+
+        const loop = (time: number) => {
+            const dt = Math.min((time - lastTime) / 1000, 0.1);
+            lastTime = time;
+
+            const s = state.current;
+
+            // Decaying shake score
+            s.shakeScore *= Math.max(0, 1 - 4 * dt);
+            s.velocity *= Math.max(0, 1 - 10 * dt);
+
+            // Visibility threshold
+            const activationThreshold = 1500;
+            const maxScore = 8000;
+
+            let targetScale = 0.166; // Baseline scale (~32px)
+            let targetOpacity = 0;
+
+            // We consider it "active" if score is high enough
+            const isActive = s.shakeScore > activationThreshold;
+
+            if (isActive) {
+                // Determine progress from threshold to max
+                const relativeScore = Math.min(s.shakeScore - activationThreshold, maxScore - activationThreshold);
+                const progress = relativeScore / (maxScore - activationThreshold);
+
+                // Scale from 0.166 (baseline) to 1.0 (max size ~192px)
+                targetScale = 0.166 + (0.834 * progress * 1.5); // Overshoot slightly for effect
+                targetScale = Math.min(targetScale, 1.2); // Cap at 1.2x max resolution
+
+                targetOpacity = Math.min(1, progress * 4);
+            }
+
+            // Smoothly interpolate
+            // Use faster interpolation for snapping back, smoother for growing
+            const lerpFactor = isActive ? 8 : 12;
+            s.scale = s.scale + (targetScale - s.scale) * lerpFactor * dt;
+
+            // Hysteresis for visibility to prevent flickering
+            const visible = s.scale > 0.18; // Slightly above baseline
+
+            // Manage system cursor visibility
+            if (visible !== wasVisible.current) {
+                wasVisible.current = visible;
+                // Determine if we should hide the system cursor
+                // We only hide it if we are significantly large/visible to avoid annoyance on small triggers
+                if (visible) {
+                    document.body.style.cursor = 'none';
+                } else {
+                    document.body.style.cursor = '';
+                }
+            }
+
+            // Update DOM
+            if (cursorRef.current) {
+                if (visible) {
+                    cursorRef.current.style.display = 'block';
+                    cursorRef.current.style.opacity = targetOpacity.toFixed(3);
+                    // Transform origin is top-left, so it grows from the mouse tip
+                    // Subtract roughly 4px to align the path's tip (3,3) with the actual mouse point
+                    cursorRef.current.style.transform = `translate3d(${s.x - 4}px, ${s.y - 4}px, 0) scale(${s.scale})`;
+                } else {
+                    cursorRef.current.style.display = 'none';
+                }
+            }
+
+            rafId.current = requestAnimationFrame(loop);
+        };
+
+        rafId.current = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(rafId.current);
+    }, []);
 
     // Track mouse position
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            setMousePos({ x: e.clientX, y: e.clientY });
+            const s = state.current;
+            s.lastX = s.x;
+            s.lastY = s.y;
+            s.x = e.clientX;
+            s.y = e.clientY;
+
+            // Calculate instantaneous velocity
+            const dist = Math.hypot(s.x - s.lastX, s.y - s.lastY);
+
+            // Add to shake score based on speed
+            if (dist > 5) {
+                s.shakeScore += dist * 5;
+            }
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -30,30 +137,53 @@ export const MouseSonar = forwardRef<MouseSonarHandle>((_, ref) => {
 
     // Expose ping method
     const ping = useCallback(() => {
-        const id = Date.now();
-        setRings((prev) => [...prev, { id, x: mousePos.x, y: mousePos.y }]);
-
-        // Remove ring after animation completes
-        setTimeout(() => {
-            setRings((prev) => prev.filter((r) => r.id !== id));
-        }, 600);
-    }, [mousePos]);
+        state.current.shakeScore = 10000;
+    }, []);
 
     useImperativeHandle(ref, () => ({ ping }), [ping]);
 
     return (
-        <>
-            {rings.map((ring) => (
-                <div
-                    key={ring.id}
-                    className="mouse-sonar-ring"
-                    style={{
-                        left: ring.x,
-                        top: ring.y,
-                    }}
+        <div
+            ref={cursorRef}
+            className="mouse-sonar-cursor"
+            style={{
+                display: 'none',
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                pointerEvents: 'none',
+                zIndex: 9999,
+                willChange: 'transform, opacity',
+                // Define base size as LARGE (192px)
+                // We scale DOWN to 32px (0.166) normally
+                // This ensures max quality when scaled up
+                width: 192,
+                height: 192,
+                transformOrigin: '0 0', // Scale from top-left (tip)
+            }}
+        >
+            <svg
+                width="100%"
+                height="100%"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.4))'
+                }}
+            >
+                <path
+                    d="M3 3L10.07 19.97L12.58 12.58L19.97 10.07L3 3Z"
+                    fill="white"
+                    stroke="black"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke" // Keep stroke consistent? Actually no, we want stroke to scale with cursor for the "big" effect
                 />
-            ))}
-        </>
+            </svg>
+        </div>
     );
 });
 
