@@ -50,5 +50,4 @@ labelLayer.draw(() => {
 });
 
 // Return a cleanup function (optional):
-// return () => { console.log('cleanup!'); };
-`;
+// return () => { console.log('cleanup!'); };`;
