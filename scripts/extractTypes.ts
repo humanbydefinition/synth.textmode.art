@@ -29,7 +29,7 @@ const LIBRARIES = [
     }
 ];
 
-const OUTPUT_PATH = 'src/editor/generatedTypes.ts';
+const OUTPUT_PATH = 'src/editor/config/generatedTypes.ts';
 
 // ============================================================================
 // Types for Augmentation Tracking
@@ -213,11 +213,28 @@ function injectAugmentations(
  */
 function generateGlobalsContent(): string {
     return `import { Textmodifier } from 'textmode.js';
-import { SynthSource, SynthParameterValue } from 'textmode.synth.js';
+import { SynthSource, SynthParameterValue, EasingFunction } from 'textmode.synth.js';
 
 declare global {
   // Main Textmode Instance
   const t: Textmodifier;
+
+  // Audio Analysis
+  interface AudioAnalysis {
+    /** Get raw FFT frequency data (0-255 per bin) */
+    fft(): Uint8Array;
+    /** Get raw time-domain waveform data (0-255, 128 = silence) */
+    waveform(): Uint8Array;
+    /** Get bass frequency level (0-1) */
+    bass(): number;
+    /** Get mid frequency level (0-1) */
+    mid(): number;
+    /** Get high frequency level (0-1) */
+    high(): number;
+    /** Get overall volume level (0-1) */
+    volume(): number;
+  }
+  const audio: AudioAnalysis;
 
   // Cleanup
   function onDispose(fn: () => void): void;
@@ -239,11 +256,19 @@ declare global {
   function shape(sides?: SynthParameterValue, radius?: SynthParameterValue, smoothing?: SynthParameterValue): SynthSource;
   function src(layer?: { id?: string }): SynthSource;
   function char(source: SynthSource, charCount?: number): SynthSource;
+  function voronoi(scale?: SynthParameterValue, speed?: SynthParameterValue, blending?: SynthParameterValue): SynthSource;
+  function charColor(source: SynthSource, color: SynthSource): SynthSource;
+  function cellColor(source: SynthSource, color: SynthSource): SynthSource;
+  function paint(source: SynthSource): SynthSource;
+
   
   // Array Extensions for synth modulation
   interface Array<T> {
-    fast(speed?: number): number[];
-    smooth(speed?: number): number[];
+    fast(speed?: number): this;
+    smooth(speed?: number): this;
+    ease(ease: EasingFunction): this;
+    offset(offset: number): this;
+    fit(low: number, high: number): this;
   }
 }
 `;

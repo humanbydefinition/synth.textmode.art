@@ -197,7 +197,6 @@ t.layers.base.synth(
  */
 
 // 1. Create a base geometric oscillation
-// We use 'src' (previous frame) mixed with osc for a trail effect
 const geometry = osc(20, 0.05, 0.8)
   .kaleid(() => 3 + audio.bass() * 5)  // Bass controls symmetry
   .rotate(0.5, 0.2);
