@@ -3,7 +3,7 @@
  * Provides a unified interface for creating textmode and Strudel editors.
  */
 
-import { createMonacoEditor, type MonacoEditorInstance, type MonacoEditorOptions } from './monaco';
+import { createTextmodeMonacoEditor, type TextmodeMonacoInstance, type TextmodeMonacoOptions } from './textmodeMonaco';
 import { createStrudelMonacoEditor, type StrudelMonacoInstance, type StrudelMonacoOptions } from './strudelMonaco';
 
 /**
@@ -53,7 +53,7 @@ export interface IEditorFactory {
         container: HTMLElement,
         initialValue: string,
         callbacks: TextmodeEditorCallbacks
-    ): MonacoEditorInstance;
+    ): TextmodeMonacoInstance;
 
     /** Create Strudel Monaco editor */
     createStrudelEditor(
@@ -91,8 +91,8 @@ export class EditorFactory implements IEditorFactory {
         container: HTMLElement,
         initialValue: string,
         callbacks: TextmodeEditorCallbacks
-    ): MonacoEditorInstance {
-        const options: MonacoEditorOptions = {
+    ): TextmodeMonacoInstance {
+        const options: TextmodeMonacoOptions = {
             container,
             initialValue,
             onChange: callbacks.onChange,
@@ -106,7 +106,7 @@ export class EditorFactory implements IEditorFactory {
             fontSize: this.fontSize,
             lineNumbers: this.lineNumbers,
         };
-        return createMonacoEditor(options);
+        return createTextmodeMonacoEditor(options);
     }
 
     /**
@@ -155,5 +155,5 @@ export class EditorFactory implements IEditorFactory {
 }
 
 // Re-export editor types for convenience
-export type { MonacoEditorInstance } from './monaco';
+export type { TextmodeMonacoInstance as MonacoEditorInstance } from './textmodeMonaco';
 export type { StrudelMonacoInstance } from './strudelMonaco';

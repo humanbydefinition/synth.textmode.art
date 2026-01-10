@@ -4,7 +4,7 @@
  */
 
 import { HostRuntime } from '../live/hostRuntime';
-import { createErrorMarker, type MonacoEditorInstance } from '../editor/monaco';
+import { createErrorMarker, type TextmodeMonacoInstance } from '../editor/textmodeMonaco';
 import { AppState, type IAppState } from '../state/AppState';
 import type { ErrorInfo } from '../types/app.types';
 
@@ -25,7 +25,7 @@ export interface TextmodeControllerDependencies {
     /** Application state store */
     appState: IAppState;
     /** Get editor instance (may be null during init) */
-    getEditor: () => MonacoEditorInstance | null;
+    getEditor: () => TextmodeMonacoInstance | null;
     /** Get runtime instance (may be null during init) */
     getRuntime: () => HostRuntime | null;
     /** Get current auto-execute setting */

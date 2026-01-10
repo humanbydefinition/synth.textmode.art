@@ -4,7 +4,7 @@
  */
 import { createRoot, type Root } from 'react-dom/client';
 import { createElement, createRef } from 'react';
-import { type MonacoEditorInstance } from './editor/monaco';
+import { type TextmodeMonacoInstance } from './editor/textmodeMonaco';
 import { type StrudelMonacoInstance } from './editor/strudelMonaco';
 import { EditorFactory, type IEditorFactory } from './editor/EditorFactory';
 import { HostRuntime } from './live/hostRuntime';
@@ -34,7 +34,7 @@ export class App {
     private audioController: IAudioController | null = null;
 
     // Textmode (visuals)
-    private textmodeEditor: MonacoEditorInstance | null = null;
+    private textmodeEditor: TextmodeMonacoInstance | null = null;
     private textmodeRuntime: HostRuntime | null = null;
     private textmodePanel: HTMLElement | null = null;
     private textmodeEditorContainer: HTMLElement | null = null;

@@ -2,7 +2,7 @@
  * Monaco Editor setup with transparent theme and keybindings
  */
 import * as monaco from 'monaco-editor';
-import { typeDefinitions } from './types';
+import { typeDefinitions } from './generatedTypes';
 
 // Import Monaco workers
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
@@ -18,7 +18,7 @@ self.MonacoEnvironment = {
     },
 };
 
-export interface MonacoEditorOptions {
+export interface TextmodeMonacoOptions {
     container: HTMLElement;
     initialValue: string;
     onChange?: (value: string) => void;
@@ -33,7 +33,7 @@ export interface MonacoEditorOptions {
     lineNumbers?: boolean;
 }
 
-export interface MonacoEditorInstance {
+export interface TextmodeMonacoInstance {
     editor: monaco.editor.IStandaloneCodeEditor;
     getValue: () => string;
     setValue: (value: string) => void;
@@ -142,7 +142,7 @@ function configureTypeScript(): void {
 /**
  * Create Monaco editor instance
  */
-export function createMonacoEditor(options: MonacoEditorOptions): MonacoEditorInstance {
+export function createTextmodeMonacoEditor(options: TextmodeMonacoOptions): TextmodeMonacoInstance {
     defineTransparentTheme();
     configureTypeScript();
 
