@@ -68,29 +68,44 @@ export class TextmodeManager implements ITextmodeManager {
     cleanupLayers(isSoftReset: boolean): void {
         if (!this.instance) return;
 
+        // Clear base layer's draw callback to prevent stale references
         try {
-            // Clear base layer's draw callback to prevent stale references
             this.instance.layers.base.draw(() => { });
+        } catch {
+            // Ignore - base layer might be in unexpected state
+        }
 
-            // Clear draw callbacks on all user layers
-            this.instance.layers.all.forEach(layer => {
+        // Clear draw callbacks on all user layers
+        for (const layer of this.instance.layers.all) {
+            try {
                 layer.draw(() => { });
-            });
+            } catch {
+                // Ignore - layer might be partially initialized
+            }
+        }
 
-            // Always clear synths to prevent broken synth state from persisting
-            // This is critical for error recovery - a broken synth (e.g., from a dynamic
-            // parameter error) would continue to throw errors every frame otherwise
-            this.clearAllSynths();
+        // Always clear synths to prevent broken synth state from persisting
+        // This is critical for error recovery - a broken synth (e.g., from a dynamic
+        // parameter error) would continue to throw errors every frame otherwise
+        this.clearAllSynths();
 
+        // Clear all user layers. This may fail for partially-initialized layers
+        // (e.g., when user code creates a layer but fails before completing).
+        // This is expected during error recovery, so we silently ignore errors.
+        try {
             this.instance.layers.clear();
+        } catch {
+            // Expected: layers created during failed code may have undefined framebuffers
+        }
 
-            // For soft reset, also reset frame count
-            if (isSoftReset) {
+        // For soft reset, also reset frame count
+        if (isSoftReset) {
+            try {
                 this.instance.frameCount = 0;
                 this.instance.secs = 0;
+            } catch {
+                // Ignore time reset errors
             }
-        } catch (e) {
-            console.warn('Error during layer cleanup:', e);
         }
     }
 

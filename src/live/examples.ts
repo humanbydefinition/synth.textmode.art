@@ -154,6 +154,75 @@ t.layers.base.synth(
     .charColor(matrixColor)      // Color them green
 );`,
   },
+  {
+    id: 'tutorial-4',
+    name: 'tutorial #4',
+    description: 'audio reactivity',
+    category: 'tutorial',
+    code: `/**
+ * @title synth.textmode.art - tutorial #4
+ * @author humanbydefinition - https://github.com/humanbydefinition
+ */
+
+/**
+ * Welcome to Tutorial #4!
+ *
+ * In this tutorial, we'll explore **Audio Reactivity**.
+ * This is where the magic happens! You can make your visuals dance to the music
+ * coming from the Strudel editor (right panel).
+ *
+ * To enable this, your Strudel pattern MUST utilize the \`.analyze()\` method.
+ * Example of a Strudel pattern:
+ * \`$: s("bd sd").analyze('main')\`
+ *
+ * The \`audio\` global gives you access to the sound analysis:
+ *
+ * **Frequency Bands (values between 0 and 1):**
+ * - \`audio.bass()\`: Low frequencies (kicks, basslines).
+ * - \`audio.mid()\`: Mid frequencies (vocals, synths).
+ * - \`audio.high()\`: High frequencies (hi-hats, sparkly sounds).
+ * - \`audio.volume()\`: Total loudness / amplitude.
+ *
+ * **Raw Analysis Data (Uint8Array):**
+ * - \`audio.fft()\`: Raw frequency domain data (spectrum).
+ * - \`audio.waveform()\`: Raw time domain data (oscilloscope).
+ *
+ * In this sketch:
+ * 1. We start with a fast \`osc\` pattern.
+ * 2. We \`kaleid\` (kaleidoscope) it, using \`audio.bass()\` to change the number of segments dynamically!
+ * 3. We use \`modulate\` with \`voronoi\` to create organic distortion, driven by \`audio.mid()\`.
+ * 4. Colors are shifted by \`audio.high()\`.
+ *
+ * Try changing the music in Strudel and watch the visuals react!
+ */
+
+// 1. Create a base geometric oscillation
+// We use 'src' (previous frame) mixed with osc for a trail effect
+const geometry = osc(20, 0.05, 0.8)
+  .kaleid(() => 3 + audio.bass() * 5)  // Bass controls symmetry
+  .rotate(0.5, 0.2);
+
+// 2. Add organic distortion / liquid movement
+// Mid frequencies make it "wobble" with more intensity
+const fluid = geometry
+  .modulate(
+     voronoi(10, 0.2, 0.5), 
+     () => 0.2 + audio.mid() * 0.5
+  )
+  .scale(() => 1 - audio.volume() * 0.2); // Pump effect
+
+// 3. Dynamic Coloring
+const colors = gradient(1)
+  .hue(() => audio.high() * 2)         // Highs shift color rapidly
+  .saturate(2)
+  .brightness(() => 0.5 + audio.bass()); // Bass flashes brightness
+
+t.layers.base.synth(
+  char(fluid)        
+    .charColor(colors)
+    .cellColor(fluid.clone().invert().mult(gradient(), 0.2))
+);`,
+  },
 
   // Basic Examples
   {
@@ -319,57 +388,7 @@ t.layers.base.synth(
     .cellColor(colorShift.clone().invert().saturate(0.3))
 );`,
   },
-  {
-    id: 'audio-reactive',
-    name: 'Audio Reactive',
-    description: 'Visuals that react to Strudel audio',
-    category: 'advanced',
-    code: `/**
- * Audio-Reactive Visuals
- * 
- * This example shows how to create visuals that respond to audio
- * coming from the Strudel editor on the right panel.
- * 
- * IMPORTANT: To enable audio reactivity, add .analyze('main') to your 
- * Strudel pattern, for example:
- *   $: s("bd sd hh sd").analyze('main')
- * 
- * The 'audio' global provides:
- *   - audio.bass()   - Low frequencies (0-1)
- *   - audio.mid()    - Mid frequencies (0-1)  
- *   - audio.high()   - High frequencies (0-1)
- *   - audio.volume() - Overall volume (0-1)
- *   - audio.fft()    - Raw frequency data (Uint8Array)
- *   - audio.waveform() - Raw waveform data (Uint8Array)
- */
 
-// Scale effect based on bass
-const bassScale = () => 1 + audio.bass() * 1.5;
-
-// Rotation based on mid frequencies
-const midRotation = () => audio.mid() * 0.3;
-
-// Color intensity based on high frequencies
-const highColor = () => audio.high();
-
-// Base pattern - concentric shapes
-const base = shape(6, () => 0.2 + audio.volume() * 0.3, 0.02)
-  .repeat(3, 3, 0.5, 0.5)
-  .scale(bassScale)
-  .rotate(midRotation);
-
-// Color driven by audio
-const colors = gradient()
-  .hue(() => audio.bass() * 0.5)
-  .saturate(() => 1 + audio.mid())
-  .colorama(() => highColor() * 0.3);
-
-t.layers.base.synth(
-  char(base)
-    .charColor(colors)
-    .cellColor(base.clone().invert().mult(colors, 0.3))
-);`,
-  },
 ];
 
 /**

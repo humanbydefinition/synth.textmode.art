@@ -66,6 +66,8 @@ export interface IStrudelController {
     handlePatternUpdate(pattern: StrudelPattern | null): void;
     /** Handle play state change */
     handlePlayStateChange(isPlaying: boolean): void;
+    /** Handle revert to last working code */
+    handleRevertToLastWorking(): void;
     /** Dispose listeners */
     dispose(): void;
 }
@@ -98,8 +100,8 @@ export class StrudelController implements IStrudelController {
             this.debounceTimer = null;
         }
 
-        const audioState = this.deps.appState.getAudioState();
-        if (this.deps.getAutoExecute() && audioState.isInitialized) {
+        const state = this.deps.appState.getStrudelState();
+        if (this.deps.getAutoExecute() && state.isInitialized) {
             this.debounceTimer = window.setTimeout(() => {
                 this.deps.getRuntime()?.evaluate(code);
                 this.debounceTimer = null;
@@ -117,8 +119,8 @@ export class StrudelController implements IStrudelController {
         editor?.clearMarkers();
 
         // Initialize audio if needed, then run
-        const audioState = this.deps.appState.getAudioState();
-        if (!audioState.isInitialized) {
+        const state = this.deps.appState.getStrudelState();
+        if (!state.isInitialized) {
             this.handleInitAudio().then(() => {
                 this.deps.getRuntime()?.forceEvaluate(code);
             });
@@ -138,8 +140,8 @@ export class StrudelController implements IStrudelController {
      * Initialize audio (must be triggered by user interaction).
      */
     async handleInitAudio(): Promise<void> {
-        const audioState = this.deps.appState.getAudioState();
-        if (audioState.isInitialized) return;
+        const state = this.deps.appState.getStrudelState();
+        if (state.isInitialized) return;
 
         await this.deps.getRuntime()?.init();
     }
@@ -150,8 +152,8 @@ export class StrudelController implements IStrudelController {
      */
     setupAutoAudioInit(): void {
         const initOnInteraction = () => {
-            const audioState = this.deps.appState.getAudioState();
-            if (!audioState.isInitialized) {
+            const state = this.deps.appState.getStrudelState();
+            if (!state.isInitialized) {
                 this.handleInitAudio();
             }
             // Remove listeners after first interaction
@@ -170,7 +172,7 @@ export class StrudelController implements IStrudelController {
      * Handle Strudel runtime ready.
      */
     handleStrudelReady(): void {
-        (this.deps.appState as AppState)?.setAudioState({ isInitialized: true });
+        (this.deps.appState as AppState)?.setStrudelState({ isInitialized: true });
         this.callbacks.onRenderOverlay();
     }
 
@@ -178,11 +180,15 @@ export class StrudelController implements IStrudelController {
      * Handle Strudel error.
      */
     handleStrudelError(error: StrudelError): void {
+        // Cancel any pending working code confirmation
+        (this.deps.appState as AppState)?.cancelPendingStrudelWorkingCode();
+
         const errorInfo: ErrorInfo = {
             message: `[Strudel] ${error.message}`,
             stack: error.stack,
             line: error.line,
             column: error.column,
+            source: 'strudel',
         };
         this.deps.appState.setError(errorInfo);
 
@@ -205,8 +211,14 @@ export class StrudelController implements IStrudelController {
         // Pattern evaluated successfully, clear any errors
         editor?.clearMarkers();
         const currentError = this.deps.appState.getError();
-        if (currentError?.message.startsWith('[Strudel]')) {
+        if (currentError?.source === 'strudel') {
             this.deps.appState.setError(null);
+        }
+
+        // Start pending working code confirmation (pattern evaluated successfully)
+        const code = editor?.getValue() ?? '';
+        if (code) {
+            (this.deps.appState as AppState)?.setPendingStrudelWorkingCode(code);
         }
 
         // Update highlighting with the new pattern
@@ -226,11 +238,33 @@ export class StrudelController implements IStrudelController {
      * Handle Strudel play state change.
      */
     handlePlayStateChange(isPlaying: boolean): void {
-        (this.deps.appState as AppState)?.setAudioState({ isPlaying });
+        (this.deps.appState as AppState)?.setStrudelState({ isPlaying });
 
         // Control highlighting based on play state
         if (!isPlaying) {
             this.deps.getEditor()?.stopHighlighting();
+        }
+
+        this.callbacks.onRenderOverlay();
+    }
+
+    /**
+     * Handle revert to last working code.
+     */
+    handleRevertToLastWorking(): void {
+        const lastWorkingCode = this.deps.appState.getLastWorkingStrudelCode();
+        if (!lastWorkingCode) return;
+
+        const editor = this.deps.getEditor();
+        editor?.setValue(lastWorkingCode);
+        this.callbacks.onSaveCode(lastWorkingCode);
+        this.deps.appState.setError(null);
+        editor?.clearMarkers();
+
+        // Re-evaluate the code
+        const state = this.deps.appState.getStrudelState();
+        if (state.isInitialized) {
+            this.deps.getRuntime()?.forceEvaluate(lastWorkingCode);
         }
 
         this.callbacks.onRenderOverlay();

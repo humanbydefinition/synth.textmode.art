@@ -3,7 +3,7 @@
  * Provides a single source of truth for application state with subscription support.
  */
 
-import { DEFAULT_SETTINGS, type StatusState, type AppSettings, type ErrorInfo, type AudioState } from '@/types/app.types';
+import { DEFAULT_SETTINGS, type StatusState, type AppSettings, type ErrorInfo, type StrudelState } from '@/types/app.types';
 
 /**
  * Complete application state.
@@ -16,9 +16,11 @@ export interface AppStateData {
     /** User settings */
     settings: AppSettings;
     /** Last known working textmode code (for revert) */
-    lastWorkingCode: string | null;
+    lastWorkingTextmodeCode: string | null;
+    /** Last known working strudel code (for revert) */
+    lastWorkingStrudelCode: string | null;
     /** Audio playback state */
-    audioState: AudioState;
+    strudelState: StrudelState;
 }
 
 /**
@@ -44,14 +46,18 @@ export interface IAppState {
     getSettings(): AppSettings;
     /** Update settings */
     setSettings(settings: AppSettings): void;
-    /** Get last working code */
+    /** Get last working textmode code */
     getLastWorkingCode(): string | null;
-    /** Set last working code */
+    /** Set last working textmode code */
     setLastWorkingCode(code: string | null): void;
+    /** Get last working strudel code */
+    getLastWorkingStrudelCode(): string | null;
+    /** Set last working strudel code */
+    setLastWorkingStrudelCode(code: string | null): void;
     /** Get audio state */
-    getAudioState(): AudioState;
+    getStrudelState(): StrudelState;
     /** Update audio state */
-    setAudioState(state: Partial<AudioState>): void;
+    setStrudelState(state: Partial<StrudelState>): void;
     /** Subscribe to state changes */
     subscribe(listener: StateListener): () => void;
 }
@@ -66,6 +72,8 @@ export class AppState implements IAppState {
     // Working code confirmation (internal mechanics)
     private pendingWorkingCode: string | null = null;
     private confirmationTimer: number | null = null;
+    private pendingStrudelWorkingCode: string | null = null;
+    private strudelConfirmationTimer: number | null = null;
     private static readonly CONFIRMATION_DELAY_MS = 100;
 
     constructor(initialSettings?: AppSettings) {
@@ -73,8 +81,9 @@ export class AppState implements IAppState {
             status: 'ready',
             error: null,
             settings: initialSettings ?? DEFAULT_SETTINGS,
-            lastWorkingCode: null,
-            audioState: {
+            lastWorkingTextmodeCode: null,
+            lastWorkingStrudelCode: null,
+            strudelState: {
                 isPlaying: false,
                 isInitialized: false,
             },
@@ -139,29 +148,44 @@ export class AppState implements IAppState {
      * Get last working code.
      */
     getLastWorkingCode(): string | null {
-        return this.state.lastWorkingCode;
+        return this.state.lastWorkingTextmodeCode;
     }
 
     /**
      * Set last working code.
      */
     setLastWorkingCode(code: string | null): void {
-        this.state.lastWorkingCode = code;
+        this.state.lastWorkingTextmodeCode = code;
+        this.notify();
+    }
+
+    /**
+     * Get last working strudel code.
+     */
+    getLastWorkingStrudelCode(): string | null {
+        return this.state.lastWorkingStrudelCode;
+    }
+
+    /**
+     * Set last working strudel code.
+     */
+    setLastWorkingStrudelCode(code: string | null): void {
+        this.state.lastWorkingStrudelCode = code;
         this.notify();
     }
 
     /**
      * Get audio state.
      */
-    getAudioState(): AudioState {
-        return this.state.audioState;
+    getStrudelState(): StrudelState {
+        return this.state.strudelState;
     }
 
     /**
      * Update audio state (partial update supported).
      */
-    setAudioState(state: Partial<AudioState>): void {
-        this.state.audioState = { ...this.state.audioState, ...state };
+    setStrudelState(state: Partial<StrudelState>): void {
+        this.state.strudelState = { ...this.state.strudelState, ...state };
         this.notify();
     }
 
@@ -191,7 +215,7 @@ export class AppState implements IAppState {
         // Set confirmation timer
         this.confirmationTimer = window.setTimeout(() => {
             if (this.pendingWorkingCode) {
-                this.state.lastWorkingCode = this.pendingWorkingCode;
+                this.state.lastWorkingTextmodeCode = this.pendingWorkingCode;
                 this.pendingWorkingCode = null;
                 this.notify();
             }
@@ -215,6 +239,42 @@ export class AppState implements IAppState {
      */
     hasPendingWorkingCode(): boolean {
         return this.pendingWorkingCode !== null;
+    }
+
+    // ==================== Strudel Working Code Confirmation ====================
+
+    /**
+     * Start pending strudel working code confirmation.
+     * If no error occurs within CONFIRMATION_DELAY_MS, code becomes lastWorkingStrudelCode.
+     */
+    setPendingStrudelWorkingCode(code: string): void {
+        // Clear any existing timer
+        if (this.strudelConfirmationTimer !== null) {
+            clearTimeout(this.strudelConfirmationTimer);
+        }
+
+        this.pendingStrudelWorkingCode = code;
+
+        // Set confirmation timer
+        this.strudelConfirmationTimer = window.setTimeout(() => {
+            if (this.pendingStrudelWorkingCode) {
+                this.state.lastWorkingStrudelCode = this.pendingStrudelWorkingCode;
+                this.pendingStrudelWorkingCode = null;
+                this.notify();
+            }
+            this.strudelConfirmationTimer = null;
+        }, AppState.CONFIRMATION_DELAY_MS);
+    }
+
+    /**
+     * Cancel pending strudel working code (called on error).
+     */
+    cancelPendingStrudelWorkingCode(): void {
+        if (this.strudelConfirmationTimer !== null) {
+            clearTimeout(this.strudelConfirmationTimer);
+            this.strudelConfirmationTimer = null;
+        }
+        this.pendingStrudelWorkingCode = null;
     }
 
     // ==================== Private Methods ====================

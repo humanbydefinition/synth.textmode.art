@@ -5,13 +5,13 @@
 
 import { DEFAULT_SETTINGS, type AppSettings } from '@/types/app.types';
 import { getCodesFromHash } from '@/live/share';
-import { defaultSketch } from '@/live/defaultSketch';
+import { defaultTextmodeSketch } from '@/live/defaultTextmodeSketch';
 import { defaultStrudelSketch } from '@/live/defaultStrudelSketch';
 
 // Storage keys
 const TEXTMODE_CODE_KEY = 'textmode_live_code';
 const STRUDEL_CODE_KEY = 'strudel_live_code';
-const SETTINGS_STORAGE_KEY = 'textmode_live_settings';
+const SETTINGS_STORAGE_KEY = 'app_settings';
 
 /**
  * Storage service interface for dependency injection and testing.
@@ -51,7 +51,7 @@ export class StorageService implements IStorageService {
         if (storedCode) return storedCode;
 
         // Fall back to default
-        return defaultSketch;
+        return defaultTextmodeSketch;
     }
 
     /**

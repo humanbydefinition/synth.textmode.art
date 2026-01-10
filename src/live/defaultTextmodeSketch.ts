@@ -1,7 +1,7 @@
 /**
  * Default example sketch code
  */
-export const defaultSketch = `// Live coding with textmode.js
+export const defaultTextmodeSketch = `// Live coding with textmode.js
 // Ctrl+Enter = run · Ctrl+Shift+R = hard reset
 // Docs: https://code.textmode.art/
 

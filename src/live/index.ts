@@ -19,7 +19,7 @@ export type {
 } from './types';
 
 // Content
-export { defaultSketch } from './defaultSketch';
+export { defaultTextmodeSketch as defaultSketch } from './defaultTextmodeSketch';
 export { defaultStrudelSketch } from './defaultStrudelSketch';
 export { examples, getExamplesByCategory, categoryNames } from './examples';
 export type { Example } from './examples';

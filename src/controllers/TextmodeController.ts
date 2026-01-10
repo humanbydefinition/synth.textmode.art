@@ -170,7 +170,7 @@ export class TextmodeController implements ITextmodeController {
      */
     handleRunError(error: ErrorInfo): void {
         this.deps.appState.setStatus('error');
-        this.deps.appState.setError(error);
+        this.deps.appState.setError({ ...error, source: 'textmode' });
 
         const editor = this.deps.getEditor();
         if (editor) {
@@ -189,7 +189,7 @@ export class TextmodeController implements ITextmodeController {
         (this.deps.appState as AppState)?.cancelPendingWorkingCode();
 
         this.deps.appState.setStatus('error');
-        this.deps.appState.setError(error);
+        this.deps.appState.setError({ ...error, source: 'textmode' });
 
         this.callbacks.onRenderOverlay();
     }

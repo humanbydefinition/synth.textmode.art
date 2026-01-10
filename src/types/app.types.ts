@@ -46,12 +46,14 @@ export interface ErrorInfo {
     line?: number;
     /** Column number in user code (1-indexed) */
     column?: number;
+    /** Source of the error: 'textmode' or 'strudel' */
+    source?: 'textmode' | 'strudel';
 }
 
 /**
  * Audio playback state.
  */
-export interface AudioState {
+export interface StrudelState {
     /** Whether audio is currently playing */
     isPlaying: boolean;
     /** Whether audio engine has been initialized (requires user interaction) */

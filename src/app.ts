@@ -8,7 +8,7 @@ import { TextmodeEditor } from './editor';
 import { StrudelEditor } from './editor';
 import { HostRuntime } from './live/hostRuntime';
 import { StrudelRuntime } from './live/strudel';
-import { defaultSketch } from './live/defaultSketch';
+import { defaultTextmodeSketch } from './live/defaultTextmodeSketch';
 import { defaultStrudelSketch } from './live/defaultStrudelSketch';
 import { setCodesToHash, getCombinedShareableUrl } from './live/share';
 import { Overlay } from './components/Overlay';
@@ -268,18 +268,27 @@ export class App {
     private renderOverlay(): void {
         if (!this.overlayRoot) return;
 
+        // Determine which revert handler to use based on error source
+        const errorSource = this.error?.source;
+        const hasLastWorking = errorSource === 'strudel'
+            ? this.appState?.getLastWorkingStrudelCode() !== null
+            : this.lastWorkingCode !== null;
+        const handleRevert = errorSource === 'strudel'
+            ? () => this.audioController?.handleRevertToLastWorking()
+            : () => this.textmodeController?.handleRevertToLastWorking();
+
         this.overlayRoot.render(
             createElement(Overlay, {
                 status: this.status,
                 settings: this.settings,
                 error: this.error,
-                hasLastWorking: this.lastWorkingCode !== null,
+                hasLastWorking: hasLastWorking,
                 onSettingsChange: (settings) => this.handleSettingsChange(settings),
                 onShare: () => this.handleShare(),
                 onClearStorage: () => this.handleClearStorage(),
                 onLoadExample: (code) => this.handleLoadExample(code),
                 onDismissError: () => this.handleDismissError(),
-                onRevertToLastWorking: () => this.textmodeController?.handleRevertToLastWorking(),
+                onRevertToLastWorking: handleRevert,
                 sonarRef: this.sonarRef,
                 // Mobile props
                 isMobile: this.layout?.isMobile ?? false,
@@ -388,9 +397,10 @@ export class App {
     private handleClearStorage(): void {
         this.storage.clearCode();
         this.appState?.setLastWorkingCode(null);
+        this.appState?.setLastWorkingStrudelCode(null);
 
         // Reset both editors to defaults
-        this.textmodeEditor?.setValue(defaultSketch);
+        this.textmodeEditor?.setValue(defaultTextmodeSketch);
         this.strudelEditor?.setValue(defaultStrudelSketch);
 
         // Stop audio
