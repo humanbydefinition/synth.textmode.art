@@ -96,7 +96,7 @@ export class App {
         // Create textmode editor container (inside left panel)
         this.textmodeEditorContainer = document.createElement('div');
         this.textmodeEditorContainer.id = 'editor-container';
-        if (this.settings.glassEffect) {
+        if (this.settings.editorBackdrop) {
             this.textmodeEditorContainer.classList.add('glass-effect');
         }
         this.textmodePanel.appendChild(this.textmodeEditorContainer);
@@ -104,7 +104,7 @@ export class App {
         // Create strudel editor container (inside right panel)
         this.strudelEditorContainer = document.createElement('div');
         this.strudelEditorContainer.id = 'strudel-editor-container';
-        if (this.settings.glassEffect) {
+        if (this.settings.editorBackdrop) {
             this.strudelEditorContainer.classList.add('glass-effect');
         }
         this.strudelPanel.appendChild(this.strudelEditorContainer);
@@ -141,7 +141,7 @@ export class App {
             onRun: () => this.textmodeController?.handleForceRun(),
             onSoftReset: () => this.textmodeController?.handleSoftReset(),
             onToggleUI: () => this.toggleUIVisibility(),
-            onToggleTextBackground: () => this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect }),
+            onToggleTextBackground: () => this.handleSettingsChange({ ...this.settings, editorBackdrop: !this.settings.editorBackdrop }),
             onToggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
             onIncreaseFontSize: () => this.handleFontSizeChange(1),
             onDecreaseFontSize: () => this.handleFontSizeChange(-1),
@@ -220,7 +220,7 @@ export class App {
                 triggerSonarPing: () => this.sonarRef.current?.ping(),
                 changeFontSize: (delta) => this.handleFontSizeChange(delta),
                 toggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
-                toggleGlassEffect: () => this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect }),
+                toggleEditorBackdrop: () => this.handleSettingsChange({ ...this.settings, editorBackdrop: !this.settings.editorBackdrop }),
                 toggleUIVisibility: () => this.toggleUIVisibility(),
                 hushAudio: () => this.audioController?.handleHush(),
             },
@@ -337,14 +337,14 @@ export class App {
 
         // Toggle glass effect on both editors
         if (this.textmodeEditorContainer) {
-            if (settings.glassEffect) {
+            if (settings.editorBackdrop) {
                 this.textmodeEditorContainer.classList.add('glass-effect');
             } else {
                 this.textmodeEditorContainer.classList.remove('glass-effect');
             }
         }
         if (this.strudelEditorContainer) {
-            if (settings.glassEffect) {
+            if (settings.editorBackdrop) {
                 this.strudelEditorContainer.classList.add('glass-effect');
             } else {
                 this.strudelEditorContainer.classList.remove('glass-effect');

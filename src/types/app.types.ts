@@ -10,7 +10,7 @@ export interface AppSettings {
     /** Run code automatically on changes */
     autoExecute: boolean;
     /** Show dark glass backdrop behind editor text */
-    glassEffect: boolean;
+    editorBackdrop: boolean;
     /** Editor font size in pixels */
     fontSize: number;
     /** Whether UI overlays are visible */
@@ -26,7 +26,7 @@ export interface AppSettings {
  */
 export const DEFAULT_SETTINGS: AppSettings = {
     autoExecute: true,
-    glassEffect: true,
+    editorBackdrop: true,
     fontSize: 16,
     uiVisible: true,
     lineNumbers: false,

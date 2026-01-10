@@ -14,7 +14,7 @@ export interface ShortcutActions {
     /** Toggle auto-execute setting */
     toggleAutoExecute: () => void;
     /** Toggle glass effect setting */
-    toggleGlassEffect: () => void;
+    toggleEditorBackdrop: () => void;
     /** Toggle UI visibility */
     toggleUIVisibility: () => void;
     /** Hush audio (stop Strudel) */
@@ -104,7 +104,7 @@ export class ShortcutsManager implements IShortcutsManager {
         // Toggle text background: Ctrl + B
         if (e.ctrlKey && e.key === 'b') {
             e.preventDefault();
-            this.actions.toggleGlassEffect();
+            this.actions.toggleEditorBackdrop();
         }
 
         // Toggle UI visibility: Ctrl + Shift + H

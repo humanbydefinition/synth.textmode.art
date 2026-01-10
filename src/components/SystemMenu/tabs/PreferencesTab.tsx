@@ -86,8 +86,8 @@ export function PreferencesTab({
                         </div>
                         <Switch
                             id="glass-effect"
-                            checked={settings.glassEffect}
-                            onCheckedChange={(checked) => onSettingsChange({ ...settings, glassEffect: checked })}
+                            checked={settings.editorBackdrop}
+                            onCheckedChange={(checked) => onSettingsChange({ ...settings, editorBackdrop: checked })}
                         />
                     </div>
 
