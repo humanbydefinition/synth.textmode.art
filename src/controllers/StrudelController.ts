@@ -4,7 +4,7 @@
  */
 
 import { StrudelRuntime, type StrudelPattern } from '../live/strudel';
-import { createStrudelErrorMarker, type StrudelMonacoInstance } from '../editor/strudelMonaco';
+import { createStrudelErrorMarker, type StrudelEditor } from '../editor/editors/StrudelEditor';
 import { AppState, type IAppState } from '../state/AppState';
 import type { ErrorInfo } from '../types/app.types';
 
@@ -21,7 +21,7 @@ export interface StrudelError {
 /**
  * Callbacks for audio controller events.
  */
-export interface AudioControllerCallbacks {
+export interface StrudelControllerCallbacks {
     /** Called when overlay needs re-rendering */
     onRenderOverlay: () => void;
     /** Called to save code to storage */
@@ -29,13 +29,13 @@ export interface AudioControllerCallbacks {
 }
 
 /**
- * Dependencies required by AudioController.
+ * Dependencies required by StrudelController.
  */
-export interface AudioControllerDependencies {
+export interface StrudelControllerDependencies {
     /** Application state store */
     appState: IAppState;
     /** Get editor instance (may be null during init) */
-    getEditor: () => StrudelMonacoInstance | null;
+    getEditor: () => StrudelEditor | null;
     /** Get runtime instance (may be null during init) */
     getRuntime: () => StrudelRuntime | null;
     /** Get current auto-execute setting */
@@ -47,7 +47,7 @@ export interface AudioControllerDependencies {
 /**
  * Audio controller interface.
  */
-export interface IAudioController {
+export interface IStrudelController {
     /** Handle code change (debounced execution) */
     handleCodeChange(code: string): void;
     /** Handle forced run (Ctrl+Enter) */
@@ -73,15 +73,15 @@ export interface IAudioController {
 /**
  * Audio Controller implementation.
  */
-export class AudioController implements IAudioController {
-    private readonly callbacks: AudioControllerCallbacks;
-    private readonly deps: AudioControllerDependencies;
+export class StrudelController implements IStrudelController {
+    private readonly callbacks: StrudelControllerCallbacks;
+    private readonly deps: StrudelControllerDependencies;
     private autoInitListener: (() => void) | null = null;
     private debounceTimer: number | null = null;
 
     constructor(
-        callbacks: AudioControllerCallbacks,
-        deps: AudioControllerDependencies
+        callbacks: StrudelControllerCallbacks,
+        deps: StrudelControllerDependencies
     ) {
         this.callbacks = callbacks;
         this.deps = deps;

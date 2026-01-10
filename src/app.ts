@@ -4,9 +4,8 @@
  */
 import { createRoot, type Root } from 'react-dom/client';
 import { createElement, createRef } from 'react';
-import { type TextmodeMonacoInstance } from './editor/textmodeMonaco';
-import { type StrudelMonacoInstance } from './editor/strudelMonaco';
-import { EditorFactory, type IEditorFactory } from './editor/EditorFactory';
+import { TextmodeEditor } from './editor';
+import { StrudelEditor } from './editor';
 import { HostRuntime } from './live/hostRuntime';
 import { StrudelRuntime } from './live/strudel';
 import { defaultSketch } from './live/defaultSketch';
@@ -20,27 +19,26 @@ import { LayoutManager, type ILayoutManager } from './layout/LayoutManager';
 import { ShortcutsManager, type IShortcutsManager } from './shortcuts/ShortcutsManager';
 import { AppState, type IAppState } from './state/AppState';
 import { TextmodeController, type ITextmodeController } from './controllers/TextmodeController';
-import { AudioController, type IAudioController } from './controllers/AudioController';
+import { StrudelController, type IStrudelController } from './controllers/StrudelController';
 import { AudioAnalyser } from './live/AudioAnalyser';
 
 export class App {
     // Services
     private storage: IStorageService = storageService;
-    private editorFactory: IEditorFactory | null = null;
     private layout: ILayoutManager | null = null;
     private shortcuts: IShortcutsManager | null = null;
     private appState: IAppState | null = null;
     private textmodeController: ITextmodeController | null = null;
-    private audioController: IAudioController | null = null;
+    private audioController: IStrudelController | null = null;
 
     // Textmode (visuals)
-    private textmodeEditor: TextmodeMonacoInstance | null = null;
+    private textmodeEditor: TextmodeEditor | null = null;
     private textmodeRuntime: HostRuntime | null = null;
     private textmodePanel: HTMLElement | null = null;
     private textmodeEditorContainer: HTMLElement | null = null;
 
     // Strudel (audio)
-    private strudelEditor: StrudelMonacoInstance | null = null;
+    private strudelEditor: StrudelEditor | null = null;
     private strudelRuntime: StrudelRuntime | null = null;
     private strudelPanel: HTMLElement | null = null;
     private strudelEditorContainer: HTMLElement | null = null;
@@ -133,41 +131,35 @@ export class App {
         const textmodeCode = this.loadTextmodeCode();
         const strudelCode = this.loadStrudelCode();
 
-        // Create editor factory with current font size and line numbers
-        this.editorFactory = new EditorFactory({
+        // Create textmode Monaco editor
+        this.textmodeEditor = new TextmodeEditor({
+            container: this.textmodeEditorContainer,
+            initialValue: textmodeCode,
             fontSize: this.settings.fontSize,
-            lineNumbers: this.settings.lineNumbers
+            lineNumbers: this.settings.lineNumbers,
+            onChange: (value) => this.textmodeController?.handleCodeChange(value),
+            onRun: () => this.textmodeController?.handleForceRun(),
+            onSoftReset: () => this.textmodeController?.handleSoftReset(),
+            onToggleUI: () => this.toggleUIVisibility(),
+            onToggleTextBackground: () => this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect }),
+            onToggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
+            onIncreaseFontSize: () => this.handleFontSizeChange(1),
+            onDecreaseFontSize: () => this.handleFontSizeChange(-1),
         });
 
-        // Create textmode Monaco editor
-        this.textmodeEditor = this.editorFactory.createTextmodeEditor(
-            this.textmodeEditorContainer,
-            textmodeCode,
-            {
-                onChange: (value) => this.textmodeController?.handleCodeChange(value),
-                onRun: () => this.textmodeController?.handleForceRun(),
-                onSoftReset: () => this.textmodeController?.handleSoftReset(),
-                onToggleUI: () => this.toggleUIVisibility(),
-                onToggleTextBackground: () => this.handleSettingsChange({ ...this.settings, glassEffect: !this.settings.glassEffect }),
-                onToggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
-                onIncreaseFontSize: () => this.handleFontSizeChange(1),
-                onDecreaseFontSize: () => this.handleFontSizeChange(-1),
-            }
-        );
-
         // Create Strudel Monaco editor
-        this.strudelEditor = this.editorFactory.createStrudelEditor(
-            this.strudelEditorContainer,
-            strudelCode,
-            {
-                onChange: (value) => this.audioController?.handleCodeChange(value),
-                onRun: () => this.audioController?.handleForceRun(),
-                onHush: () => this.audioController?.handleHush(),
-                onToggleUI: () => this.toggleUIVisibility(),
-                onIncreaseFontSize: () => this.handleFontSizeChange(1),
-                onDecreaseFontSize: () => this.handleFontSizeChange(-1),
-            }
-        );
+        this.strudelEditor = new StrudelEditor({
+            container: this.strudelEditorContainer,
+            initialValue: strudelCode,
+            fontSize: this.settings.fontSize,
+            lineNumbers: this.settings.lineNumbers,
+            onChange: (value) => this.audioController?.handleCodeChange(value),
+            onRun: () => this.audioController?.handleForceRun(),
+            onHush: () => this.audioController?.handleHush(),
+            onToggleUI: () => this.toggleUIVisibility(),
+            onIncreaseFontSize: () => this.handleFontSizeChange(1),
+            onDecreaseFontSize: () => this.handleFontSizeChange(-1),
+        });
 
         // Create textmode controller
         this.textmodeController = new TextmodeController(
@@ -185,7 +177,7 @@ export class App {
         );
 
         // Create audio controller
-        this.audioController = new AudioController(
+        this.audioController = new StrudelController(
             {
                 onRenderOverlay: () => this.renderOverlay(),
                 onSaveCode: (code) => this.saveStrudelCode(code),
@@ -342,11 +334,6 @@ export class App {
     private handleSettingsChange(settings: AppSettings): void {
         this.settings = settings;
         this.saveSettings(settings);
-
-        // Update editor factory for future editors
-        if (this.editorFactory) {
-            this.editorFactory.setLineNumbers(settings.lineNumbers);
-        }
 
         // Toggle glass effect on both editors
         if (this.textmodeEditorContainer) {
