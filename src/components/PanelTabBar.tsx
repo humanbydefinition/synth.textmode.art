@@ -2,62 +2,20 @@
  * Audio controls component for Strudel playback
  * Audio is automatically initialized on first user interaction
  */
-import { Play, Square } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-export interface AudioControlsProps {
-    isPlaying: boolean;
-    onPlay: () => void;
-    onHush: () => void;
-    className?: string;
-}
-
-export function AudioControls({
-    isPlaying,
-    onPlay,
-    onHush,
-    className,
-}: AudioControlsProps) {
-    // Audio initializes automatically on first user interaction
-    // Just show the play/stop controls (they'll work once audio is ready)
-    return (
-        <div className={cn('audio-controls', className)}>
-            {isPlaying ? (
-                <button
-                    onClick={onHush}
-                    className="playing"
-                    title="Stop audio (Ctrl+.)"
-                    aria-label="Stop audio"
-                >
-                    <Square className="w-4 h-4" />
-                </button>
-            ) : (
-                <button
-                    onClick={onPlay}
-                    title="Play audio (Ctrl+Enter)"
-                    aria-label="Play audio"
-                >
-                    <Play className="w-4 h-4" />
-                </button>
-            )}
-        </div>
-    );
-}
 
 /**
  * Mobile tab bar for switching between textmode and Strudel panels
  */
-export interface MobileTabBarProps {
+export interface PanelTabBarProps {
     activePanel: 'textmode' | 'strudel';
-    isAudioPlaying: boolean;
     onSelectPanel: (panel: 'textmode' | 'strudel') => void;
 }
 
-export function MobileTabBar({
+export function PanelTabBar({
     activePanel,
-    isAudioPlaying,
     onSelectPanel,
-}: MobileTabBarProps) {
+}: PanelTabBarProps) {
     return (
         <div className={cn(
             "fixed top-2 left-2 z-50",
@@ -89,9 +47,6 @@ export function MobileTabBar({
                 onClick={() => onSelectPanel('strudel')}
             >
                 strudel
-                {isAudioPlaying && (
-                    <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
-                )}
             </button>
         </div>
     );

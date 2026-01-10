@@ -4,7 +4,7 @@
 
 // Host runtime (used by parent window)
 export { HostRuntime } from './hostRuntime';
-export type { HostRuntimeOptions } from './hostRuntime';
+export type { HostRuntimeOptions } from './types/runtime.types';
 
 // Strudel runtime (audio)
 export { StrudelRuntime } from './strudel';

@@ -12,8 +12,9 @@ import { StrudelRuntime } from './live/strudel';
 import { defaultSketch } from './live/defaultSketch';
 import { defaultStrudelSketch } from './live/defaultStrudelSketch';
 import { setCodesToHash, getCombinedShareableUrl } from './live/share';
-import { Overlay, type MouseSonarHandle } from './components/Overlay';
-import { DEFAULT_SETTINGS, type StatusState, type AppSettings, type ErrorInfo, type AudioState } from './types/app.types';
+import { Overlay } from './components/Overlay';
+import { type MouseSonarHandle } from './components/MouseSonar';
+import { DEFAULT_SETTINGS, type StatusState, type AppSettings, type ErrorInfo } from './types/app.types';
 import { storageService, type IStorageService } from './services/StorageService';
 import { LayoutManager, type ILayoutManager } from './layout/LayoutManager';
 import { ShortcutsManager, type IShortcutsManager } from './shortcuts/ShortcutsManager';
@@ -75,9 +76,6 @@ export class App {
     }
     private set lastWorkingCode(value: string | null) {
         this.appState?.setLastWorkingCode(value);
-    }
-    private get audioState(): AudioState {
-        return this.appState?.getAudioState() ?? { isPlaying: false, isInitialized: false };
     }
 
     /**
@@ -291,10 +289,6 @@ export class App {
                 onDismissError: () => this.handleDismissError(),
                 onRevertToLastWorking: () => this.textmodeController?.handleRevertToLastWorking(),
                 sonarRef: this.sonarRef,
-                // Audio props
-                audioState: this.audioState,
-                onPlayAudio: () => this.audioController?.handleForceRun(),
-                onHushAudio: () => this.audioController?.handleHush(),
                 // Mobile props
                 isMobile: this.layout?.isMobile ?? false,
                 activePanel: this.layout?.activePanel ?? 'textmode',

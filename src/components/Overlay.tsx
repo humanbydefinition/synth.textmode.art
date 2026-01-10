@@ -4,12 +4,9 @@ import { SystemMenu } from './SystemMenu/SystemMenu';
 import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeDialog } from './WelcomeDialog';
 import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
-import { MobileTabBar } from './AudioControls';
+import { PanelTabBar } from './PanelTabBar';
 import { cn } from '@/lib/utils';
-import type { StatusState, AppSettings, ErrorInfo, AudioState } from '@/types/app.types';
-
-// Re-export types for backward compatibility
-export type { AudioState } from '@/types/app.types';
+import type { StatusState, AppSettings, ErrorInfo } from '@/types/app.types';
 
 interface OverlayProps {
     status: StatusState;
@@ -23,10 +20,6 @@ interface OverlayProps {
     onDismissError: () => void;
     onRevertToLastWorking: () => void;
     sonarRef?: RefObject<MouseSonarHandle | null>;
-    // Audio-related props
-    audioState?: AudioState;
-    onPlayAudio?: () => void;
-    onHushAudio?: () => void;
     // Mobile panel switching
     isMobile?: boolean;
     activePanel?: 'textmode' | 'strudel';
@@ -44,16 +37,10 @@ export function Overlay({
     onDismissError,
     onRevertToLastWorking,
     sonarRef,
-    audioState,
-    onPlayAudio: _onPlayAudio,
-    onHushAudio: _onHushAudio,
     isMobile = false,
     activePanel = 'textmode',
     onSelectPanel,
 }: OverlayProps) {
-    // Note: _onPlayAudio and _onHushAudio are currently unused but kept for future use
-    void _onPlayAudio;
-    void _onHushAudio;
 
     const [welcomeOpen, setWelcomeOpen] = useState(true);
 
@@ -66,9 +53,8 @@ export function Overlay({
 
             {/* Mobile tab bar for panel switching */}
             {isMobile && onSelectPanel && (
-                <MobileTabBar
+                <PanelTabBar
                     activePanel={activePanel}
-                    isAudioPlaying={audioState?.isPlaying ?? false}
                     onSelectPanel={onSelectPanel}
                 />
             )}
@@ -98,7 +84,3 @@ export function Overlay({
         </>
     );
 }
-
-// Re-export types for backward compatibility
-export type { StatusState, AppSettings, ErrorInfo } from '@/types/app.types';
-export type { MouseSonarHandle } from './MouseSonar';

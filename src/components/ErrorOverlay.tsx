@@ -3,9 +3,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { ErrorInfo } from '@/types/app.types';
 
-// Re-export for backward compatibility
-export type { ErrorInfo } from '@/types/app.types';
-
 interface ErrorOverlayProps {
     error: ErrorInfo | null;
     hasLastWorking: boolean;

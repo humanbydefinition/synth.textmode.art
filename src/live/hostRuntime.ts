@@ -6,9 +6,6 @@ import { isRunnerMessage } from './protocol';
 import type { IHostRuntime, RuntimeError, HostRuntimeOptions } from './types';
 import type { AudioData } from './AudioAnalyser';
 
-// Re-export types for backward compatibility
-export type { HostRuntimeOptions } from './types';
-
 export class HostRuntime implements IHostRuntime {
     private iframe: HTMLIFrameElement | null = null;
     private container: HTMLElement;
