@@ -212,7 +212,7 @@ const fluid = geometry
 
 // 3. Dynamic Coloring
 const colors = gradient(1)
-  .hue(() => audio.high() * 2)         // Highs shift color rapidly
+  .hue(() => audio.high())         // Highs shift color
   .saturate(2)
   .brightness(() => 0.5 + audio.bass()); // Bass flashes brightness
 
@@ -220,6 +220,7 @@ t.layers.base.synth(
   char(fluid)        
     .charColor(colors)
     .cellColor(fluid.clone().invert().mult(gradient(), 0.2))
+    .charMap("@#%*+=-:. ")
 );`,
   },
 
