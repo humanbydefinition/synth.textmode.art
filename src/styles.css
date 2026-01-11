@@ -75,6 +75,12 @@ html {
   transform-origin: left top;
 }
 
+/* ===== HIDE IPAD KEYBOARD WIDGET ===== */
+/* Monaco's built-in keyboard icon for iOS/iPad - redundant for this app */
+.monaco-editor .iPadShowKeyboard {
+  display: none !important;
+}
+
 /* ===== MONACO TRANSPARENT THEME ===== */
 .monaco-editor,
 .monaco-editor .margin,
