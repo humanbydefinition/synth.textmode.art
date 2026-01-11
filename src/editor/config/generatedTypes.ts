@@ -1,6 +1,6 @@
 /**
  * AUTO-GENERATED TYPE DEFINITIONS FOR MONACO INTELLISENSE
- * Generated: 2026-01-10T22:41:51.972Z
+ * Generated: 2026-01-10T23:51:45.717Z
  * 
  * This file contains:
  * - All .d.ts files from textmode.js and textmode.synth.js

@@ -167,7 +167,7 @@ t.layers.base.synth(
 /**
  * Welcome to Tutorial #4!
  *
- * In this tutorial, we'll explore **Audio Reactivity**.
+ * In this tutorial, we'll explore audio reactivity.
  * This is where the magic happens! You can make your visuals dance to the music
  * coming from the Strudel editor (right panel).
  *
@@ -177,13 +177,13 @@ t.layers.base.synth(
  *
  * The \`audio\` global gives you access to the sound analysis:
  *
- * **Frequency Bands (values between 0 and 1):**
+ * Frequency bands (values between 0 and 1):
  * - \`audio.bass()\`: Low frequencies (kicks, basslines).
  * - \`audio.mid()\`: Mid frequencies (vocals, synths).
  * - \`audio.high()\`: High frequencies (hi-hats, sparkly sounds).
  * - \`audio.volume()\`: Total loudness / amplitude.
  *
- * **Raw Analysis Data (Uint8Array):**
+ * Raw analysis data (Uint8Array):
  * - \`audio.fft()\`: Raw frequency domain data (spectrum).
  * - \`audio.waveform()\`: Raw time domain data (oscilloscope).
  *
@@ -222,6 +222,123 @@ t.layers.base.synth(
     .cellColor(fluid.clone().invert().mult(gradient(), 0.2))
     .charMap("@#%*+=-:. ")
 );`,
+  },
+  {
+    id: 'tutorial-5',
+    name: 'tutorial #5',
+    description: 'layering system & composition',
+    category: 'tutorial',
+    code: `/**
+ * @title synth.textmode.art - tutorial #5
+ * @author humanbydefinition - https://github.com/humanbydefinition
+ */
+
+/**
+ * Welcome to Tutorial #5!
+ *
+ * In this tutorial, we'll explore the layering system.
+ * Layers let you stack multiple synths on top of each other,
+ * each with its own blend mode, position, rotation, opacity, and font size.
+ *
+ * Key layer methods:
+ * - \`t.layers.add({ options })\` - Create a new layer
+ * - \`layer.synth(src)\` - Define a synth for the layer
+ * - \`layer.blendMode(mode)\` - Set how the layer blends with layers below
+ * - \`layer.offset(x, y)\` - Reposition the layer in pixels
+ * - \`layer.rotateZ(degrees)\` - Rotate the layer around its center
+ * - \`layer.opacity(value)\` - Set transparency (0-1)
+ * - \`layer.draw(callback)\` - Draw using the textmode.js API
+ *
+ * Available blend modes:
+ * 'normal', 'additive', 'multiply', 'screen', 'difference', 
+ * 'overlay', 'softLight', 'hardLight', 'colorDodge', 'colorBurn', etc.
+ *
+ * In this example:
+ * 1. The BASE layer renders a kaleidoscopic oscillator as the background.
+ * 2. A second layer uses 'screen' blend mode with a voronoi pattern.
+ * 3. A third layer uses 'difference' blend, rotating over time.
+ * 4. A fourth layer uses the textmode.js drawing API to render custom shapes.
+ *
+ * Try changing the blend modes, rotation speeds, or offsets to see how they interact!
+ */
+
+// === BASE LAYER ===
+// The base layer is always at the bottom of the stack
+t.layers.base.synth(
+  char(osc(10, 0.1, 0.5).kaleid(6))
+    .charColor(gradient().hue(() => t.secs * 0.1))
+    .cellColor(solid(0.05, 0.05, 0.1))
+    .charMap("░▒▓█")
+);
+
+// === LAYER 2: Screen Blend with Voronoi ===
+const layer2 = t.layers.add({ blendMode: 'screen', opacity: 0.7 });
+layer2.synth(
+  char(voronoi(12, 0.2))
+    .charColor(osc(5, 0.1).colorama(0.3))
+    .cellColor(solid(0, 0, 0, 0)) // Transparent background
+    .charMap("○●◐◑")
+);
+
+// Animate the offset in a circular path
+layer2.draw(() => {
+  const time = t.secs;
+  const radius = 50;
+  layer2.offset(
+    Math.sin(time * 0.5) * radius,
+    Math.cos(time * 0.5) * radius
+  );
+});
+
+// === LAYER 3: Difference Blend with Rotation ===
+const layer3 = t.layers.add({ blendMode: 'difference', opacity: 0.6 });
+layer3.synth(
+  char(noise(2, 0.1).pixelate(20))
+    .charColor(solid(1, 0.5, 0))
+    .cellColor(solid(0, 0, 0, 0))
+    .charMap("╱╲╳")
+);
+
+// Rotate the layer continuously
+layer3.draw(() => {
+  layer3.rotateZ(t.secs * 15); // 15 degrees per second
+});
+
+// === LAYER 4: Custom Drawing with textmode.js API ===
+const layer4 = t.layers.add({ fontSize: 32, blendMode: 'additive', opacity: 0.8 });
+
+layer4.draw(() => {
+  t.clear(); // Clear this layer each frame
+  
+  const time = t.secs;
+  const cols = t.grid.cols;
+  const rows = t.grid.rows;
+  
+  // Draw animated circles using the textmode.js drawing API
+  for (let i = 0; i < 5; i++) {
+    const angle = (time + i * 0.5) * 1.2;
+    const distance = 4 + Math.sin(time * 2 + i) * 2;
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance;
+    
+    // Set drawing properties
+    t.char('○');
+    t.charColor(
+      Math.sin(time + i) * 127 + 128, 
+      Math.sin(time + i + 2) * 127 + 128, 
+      Math.sin(time + i + 4) * 127 + 128
+    );
+    t.cellColor(0, 0, 0, 0);
+    
+    // Draw a point at the position
+    t.translate(x, y);
+    t.point();
+    t.translate(-x, -y);
+  }
+  
+  // Add subtle rotation to the whole layer
+  layer4.rotateZ(Math.sin(time * 0.3) * 10);
+});`,
   },
 
   // Basic Examples
