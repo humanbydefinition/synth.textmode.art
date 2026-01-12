@@ -54,7 +54,7 @@ export function LegalTab() {
                                 <div>
                                     <h4 className="font-medium text-zinc-200 mb-2">Introduction</h4>
                                     <p className="text-zinc-500">
-                                        synth.textmode.art is a live coding environment for creating real-time visuals with textmode.js and audio patterns with Strudel. This application is hosted on a Virtual Private Server (VPS) provided by <a href="https://www.hetzner.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Hetzner</a>. As service providers, Hetzner may collect certain technically necessary data (including IP addresses) in accordance with their privacy policy.
+                                        synth.textmode.art is a live coding environment for creating real-time visuals with textmode.js. This application is hosted on a Virtual Private Server (VPS) provided by <a href="https://www.hetzner.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 transition-colors">Hetzner</a>. As service providers, Hetzner may collect certain technically necessary data (including IP addresses) in accordance with their privacy policy.
                                     </p>
                                 </div>
 
@@ -75,9 +75,9 @@ export function LegalTab() {
                                 </div>
 
                                 <div>
-                                    <h4 className="font-medium text-zinc-200 mb-2">External Resources (Audio, Images, Fonts)</h4>
+                                    <h4 className="font-medium text-zinc-200 mb-2">External Resources (Images, Fonts)</h4>
                                     <p className="text-zinc-500">
-                                        Both Strudel and textmode.js allow loading external resources such as audio samples, images, fonts, or videos from third-party Content Delivery Networks (CDNs) or servers. When you use these features or custom user scripts, your browser establishes a direct connection to these external providers to fetch the requested assets. This process involves the transmission of technically necessary data, such as your IP address, to the respective third-party provider.
+                                        textmode.js allows loading external resources such as images, fonts, or videos from third-party Content Delivery Networks (CDNs) or servers. When you use these features or custom user scripts, your browser establishes a direct connection to these external providers to fetch the requested assets. This process involves the transmission of technically necessary data, such as your IP address, to the respective third-party provider.
                                     </p>
                                 </div>
 

@@ -70,7 +70,7 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                         </DialogClose>
                     </div>
                     <DialogDescription className="text-sm text-zinc-400">
-                        live coding environment for ascii synthesis and algorithmic audio patterns. create procedural text art with textmode.js and music with strudel.
+                        live coding environment for ascii synthesis. create procedural and generative text art with textmode.js.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -95,10 +95,6 @@ export function WelcomeDialog({ onOpenChange }: WelcomeDialogProps) {
                         <p>
                             <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400">Ctrl+Enter</span>
                             {' '}to run your code
-                        </p>
-                        <p>
-                            <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400">Ctrl+.</span>
-                            {' '}to hush audio
                         </p>
                         <p>
                             <span className="font-mono bg-zinc-900 px-1.5 py-0.5 rounded text-zinc-400">Ctrl+Shift+R</span>

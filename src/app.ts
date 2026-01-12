@@ -1,35 +1,30 @@
 /**
- * Main application - orchestrates Monaco editor, iframe runtime, Strudel audio, React UI, and state
- * Split-screen layout with textmode.js visuals on left and Strudel audio on right
+ * Main application - orchestrates Monaco editor, iframe runtime, React UI, and state
+ * Full-screen layout with textmode.js visuals
+ * 
+ * NOTE: Strudel audio integration is disabled while app is closed-source.
+ * The Strudel-related code has been removed but files are kept for future re-enablement.
  */
 import { createRoot, type Root } from 'react-dom/client';
 import { createElement, createRef } from 'react';
 import { TextmodeEditor } from './editor';
-import { StrudelEditor } from './editor';
 import { HostRuntime } from './live/hostRuntime';
-import { StrudelRuntime } from './live/strudel';
 import { defaultTextmodeSketch } from './live/defaultTextmodeSketch';
-import { defaultStrudelSketch } from './live/defaultStrudelSketch';
-import { setCodesToHash, getCombinedShareableUrl } from './live/share';
+import { setCodeToHash, getShareableUrl } from './live/share';
 import { Overlay } from './components/Overlay';
 import { type MouseSonarHandle } from './components/MouseSonar';
 import { DEFAULT_SETTINGS, type StatusState, type AppSettings, type ErrorInfo } from './types/app.types';
 import { storageService, type IStorageService } from './services/StorageService';
-import { LayoutManager, type ILayoutManager } from './layout/LayoutManager';
 import { ShortcutsManager, type IShortcutsManager } from './shortcuts/ShortcutsManager';
 import { AppState, type IAppState } from './state/AppState';
 import { TextmodeController, type ITextmodeController } from './controllers/TextmodeController';
-import { StrudelController, type IStrudelController } from './controllers/StrudelController';
-import { AudioAnalyser } from './live/AudioAnalyser';
 
 export class App {
     // Services
     private storage: IStorageService = storageService;
-    private layout: ILayoutManager | null = null;
     private shortcuts: IShortcutsManager | null = null;
     private appState: IAppState | null = null;
     private textmodeController: ITextmodeController | null = null;
-    private audioController: IStrudelController | null = null;
 
     // Textmode (visuals)
     private textmodeEditor: TextmodeEditor | null = null;
@@ -37,18 +32,9 @@ export class App {
     private textmodePanel: HTMLElement | null = null;
     private textmodeEditorContainer: HTMLElement | null = null;
 
-    // Strudel (audio)
-    private strudelEditor: StrudelEditor | null = null;
-    private strudelRuntime: StrudelRuntime | null = null;
-    private strudelPanel: HTMLElement | null = null;
-    private strudelEditorContainer: HTMLElement | null = null;
-
     // React overlay
     private overlayRoot: Root | null = null;
     private sonarRef = createRef<MouseSonarHandle>();
-
-    // Audio analysis for audio-reactive visuals
-    private audioAnalyser: AudioAnalyser | null = null;
 
     // Convenience accessors (delegate to appState)
     private get status(): StatusState {
@@ -84,42 +70,21 @@ export class App {
         const loadedSettings = this.storage.loadSettings();
         this.appState = new AppState(loadedSettings);
 
-        // Get panel containers from HTML
+        // Get panel container from HTML
         this.textmodePanel = document.getElementById('textmode-panel');
-        this.strudelPanel = document.getElementById('strudel-panel');
 
-        if (!this.textmodePanel || !this.strudelPanel) {
-            console.error('Panel containers not found in DOM');
+        if (!this.textmodePanel) {
+            console.error('Panel container not found in DOM');
             return;
         }
 
-        // Create textmode editor container (inside left panel)
+        // Create textmode editor container (inside panel)
         this.textmodeEditorContainer = document.createElement('div');
         this.textmodeEditorContainer.id = 'editor-container';
         if (this.settings.editorBackdrop) {
             this.textmodeEditorContainer.classList.add('glass-effect');
         }
         this.textmodePanel.appendChild(this.textmodeEditorContainer);
-
-        // Create strudel editor container (inside right panel)
-        this.strudelEditorContainer = document.createElement('div');
-        this.strudelEditorContainer.id = 'strudel-editor-container';
-        if (this.settings.editorBackdrop) {
-            this.strudelEditorContainer.classList.add('glass-effect');
-        }
-        this.strudelPanel.appendChild(this.strudelEditorContainer);
-
-        // Create layout manager for split-pane and mobile layout
-        this.layout = new LayoutManager({
-            containerId: 'app-container',
-            textmodePanel: this.textmodePanel,
-            strudelPanel: this.strudelPanel,
-            textmodeEditorContainer: this.textmodeEditorContainer,
-            strudelEditorContainer: this.strudelEditorContainer,
-            onPanelChange: (panel) => this.handlePanelChange(panel),
-            onLayoutChange: () => this.renderOverlay(),
-        });
-        this.layout.init();
 
         // Create React overlay root
         const overlayRootEl = document.createElement('div');
@@ -129,7 +94,6 @@ export class App {
 
         // Load initial code
         const textmodeCode = this.loadTextmodeCode();
-        const strudelCode = this.loadStrudelCode();
 
         // Create textmode Monaco editor
         this.textmodeEditor = new TextmodeEditor({
@@ -143,20 +107,6 @@ export class App {
             onToggleUI: () => this.toggleUIVisibility(),
             onToggleTextBackground: () => this.handleSettingsChange({ ...this.settings, editorBackdrop: !this.settings.editorBackdrop }),
             onToggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
-            onIncreaseFontSize: () => this.handleFontSizeChange(1),
-            onDecreaseFontSize: () => this.handleFontSizeChange(-1),
-        });
-
-        // Create Strudel Monaco editor
-        this.strudelEditor = new StrudelEditor({
-            container: this.strudelEditorContainer,
-            initialValue: strudelCode,
-            fontSize: this.settings.fontSize,
-            lineNumbers: this.settings.lineNumbers,
-            onChange: (value) => this.audioController?.handleCodeChange(value),
-            onRun: () => this.audioController?.handleForceRun(),
-            onHush: () => this.audioController?.handleHush(),
-            onToggleUI: () => this.toggleUIVisibility(),
             onIncreaseFontSize: () => this.handleFontSizeChange(1),
             onDecreaseFontSize: () => this.handleFontSizeChange(-1),
         });
@@ -176,21 +126,6 @@ export class App {
             }
         );
 
-        // Create audio controller
-        this.audioController = new StrudelController(
-            {
-                onRenderOverlay: () => this.renderOverlay(),
-                onSaveCode: (code) => this.saveStrudelCode(code),
-            },
-            {
-                appState: this.appState!,
-                getEditor: () => this.strudelEditor,
-                getRuntime: () => this.strudelRuntime,
-                getAutoExecute: () => this.settings.autoExecute,
-                getAutoExecuteDelay: () => this.settings.autoExecuteDelay,
-            }
-        );
-
         // Create iframe runtime for textmode (fullscreen canvas in background)
         this.textmodeRuntime = new HostRuntime({
             container: document.body,
@@ -198,14 +133,6 @@ export class App {
             onRunOk: () => this.textmodeController!.handleRunOk(),
             onRunError: (error) => this.textmodeController!.handleRunError(error),
             onSynthError: (error) => this.textmodeController!.handleSynthError(error),
-        });
-
-        // Create Strudel runtime (audio engine)
-        this.strudelRuntime = new StrudelRuntime({
-            onReady: () => this.audioController!.handleStrudelReady(),
-            onError: (error) => this.audioController!.handleStrudelError(error),
-            onPatternUpdate: (pattern) => this.audioController!.handlePatternUpdate(pattern),
-            onPlayStateChange: (isPlaying) => this.audioController!.handlePlayStateChange(isPlaying),
         });
 
         // Initial render of React overlay
@@ -222,45 +149,12 @@ export class App {
                 toggleAutoExecute: () => this.handleSettingsChange({ ...this.settings, autoExecute: !this.settings.autoExecute }),
                 toggleEditorBackdrop: () => this.handleSettingsChange({ ...this.settings, editorBackdrop: !this.settings.editorBackdrop }),
                 toggleUIVisibility: () => this.toggleUIVisibility(),
-                hushAudio: () => this.audioController?.handleHush(),
             },
         });
         this.shortcuts.init();
-
-        // Create audio analyser for audio-reactive visuals
-        // Polls Strudel's AnalyserNode and sends data to iframe at 60fps
-        this.audioAnalyser = new AudioAnalyser({
-            onData: (data) => {
-                this.textmodeRuntime?.sendAudioData(data);
-            },
-        });
-        this.audioAnalyser.start();
-
-        // Auto-initialize audio on first user interaction
-        this.audioController.setupAutoAudioInit();
     }
 
-    /**
-     * Handle panel change from layout manager (for editor focus)
-     */
-    private handlePanelChange(panel: 'textmode' | 'strudel'): void {
-        // Only auto-focus on desktop to avoid triggering keyboard on mobile
-        if (!this.layout?.isMobile) {
-            if (panel === 'textmode') {
-                this.textmodeEditor?.editor.focus();
-            } else {
-                this.strudelEditor?.focus();
-            }
-        }
-        this.renderOverlay();
-    }
 
-    /**
-     * Handle mobile panel selection (delegates to layout manager)
-     */
-    private handleSelectPanel(panel: 'textmode' | 'strudel'): void {
-        this.layout?.setActivePanel(panel);
-    }
 
     /**
      * Render React overlay
@@ -268,14 +162,9 @@ export class App {
     private renderOverlay(): void {
         if (!this.overlayRoot) return;
 
-        // Determine which revert handler to use based on error source
-        const errorSource = this.error?.source;
-        const hasLastWorking = errorSource === 'strudel'
-            ? this.appState?.getLastWorkingStrudelCode() !== null
-            : this.lastWorkingCode !== null;
-        const handleRevert = errorSource === 'strudel'
-            ? () => this.audioController?.handleRevertToLastWorking()
-            : () => this.textmodeController?.handleRevertToLastWorking();
+        // Determine revert handler
+        const hasLastWorking = this.lastWorkingCode !== null;
+        const handleRevert = () => this.textmodeController?.handleRevertToLastWorking();
 
         this.overlayRoot.render(
             createElement(Overlay, {
@@ -290,10 +179,6 @@ export class App {
                 onDismissError: () => this.handleDismissError(),
                 onRevertToLastWorking: handleRevert,
                 sonarRef: this.sonarRef,
-                // Mobile props
-                isMobile: this.layout?.isMobile ?? false,
-                activePanel: this.layout?.activePanel ?? 'textmode',
-                onSelectPanel: (panel) => this.handleSelectPanel(panel),
             })
         );
     }
@@ -308,24 +193,10 @@ export class App {
     }
 
     /**
-     * Load strudel code from localStorage or use default
-     */
-    private loadStrudelCode(): string {
-        return this.storage.loadStrudelCode();
-    }
-
-    /**
      * Save textmode code to localStorage
      */
     private saveTextmodeCode(code: string): void {
         this.storage.saveTextmodeCode(code);
-    }
-
-    /**
-     * Save strudel code to localStorage
-     */
-    private saveStrudelCode(code: string): void {
-        this.storage.saveStrudelCode(code);
     }
 
     /**
@@ -344,7 +215,7 @@ export class App {
         this.settings = settings;
         this.saveSettings(settings);
 
-        // Toggle glass effect on both editors
+        // Toggle glass effect on editor
         if (this.textmodeEditorContainer) {
             if (settings.editorBackdrop) {
                 this.textmodeEditorContainer.classList.add('glass-effect');
@@ -352,15 +223,8 @@ export class App {
                 this.textmodeEditorContainer.classList.remove('glass-effect');
             }
         }
-        if (this.strudelEditorContainer) {
-            if (settings.editorBackdrop) {
-                this.strudelEditorContainer.classList.add('glass-effect');
-            } else {
-                this.strudelEditorContainer.classList.remove('glass-effect');
-            }
-        }
 
-        // Apply settings to both editors (font size + line numbers)
+        // Apply settings to editor (font size + line numbers)
         const editorOptions = {
             fontSize: settings.fontSize,
             lineNumbers: settings.lineNumbers ? 'on' as const : 'off' as const,
@@ -371,21 +235,17 @@ export class App {
         if (this.textmodeEditor) {
             this.textmodeEditor.updateOptions(editorOptions);
         }
-        if (this.strudelEditor) {
-            this.strudelEditor.updateOptions(editorOptions);
-        }
 
         this.renderOverlay();
     }
 
     /**
-     * Handle share button (shares both textmode and strudel code)
+     * Handle share button (shares textmode code)
      */
     private handleShare(): void {
         const textmodeCode = this.textmodeEditor?.getValue() ?? '';
-        const strudelCode = this.strudelEditor?.getValue() ?? '';
-        const url = getCombinedShareableUrl(textmodeCode, strudelCode);
-        setCodesToHash(textmodeCode, strudelCode);
+        const url = getShareableUrl(textmodeCode);
+        setCodeToHash(textmodeCode);
         navigator.clipboard.writeText(url).catch(() => {
             console.log('Share URL:', url);
         });
@@ -397,14 +257,9 @@ export class App {
     private handleClearStorage(): void {
         this.storage.clearCode();
         this.appState?.setLastWorkingCode(null);
-        this.appState?.setLastWorkingStrudelCode(null);
 
-        // Reset both editors to defaults
+        // Reset editor to default
         this.textmodeEditor?.setValue(defaultTextmodeSketch);
-        this.strudelEditor?.setValue(defaultStrudelSketch);
-
-        // Stop audio
-        this.audioController?.handleHush();
 
         // Use textmode controller for soft reset
         this.textmodeController?.handleSoftReset();
@@ -426,7 +281,6 @@ export class App {
     private handleDismissError(): void {
         this.error = null;
         this.textmodeEditor?.clearMarkers();
-        this.strudelEditor?.clearMarkers();
         this.renderOverlay();
     }
 
@@ -440,11 +294,6 @@ export class App {
         // Toggle textmode editor visibility
         if (this.textmodeEditorContainer) {
             this.textmodeEditorContainer.style.display = newVisibility ? '' : 'none';
-        }
-
-        // Toggle strudel panel visibility (entire panel since it has background)
-        if (this.strudelPanel) {
-            this.strudelPanel.style.display = newVisibility ? '' : 'none';
         }
 
         // Toggle overlay visibility

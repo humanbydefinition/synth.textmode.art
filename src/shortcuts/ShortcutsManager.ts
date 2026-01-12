@@ -1,6 +1,8 @@
 /**
  * Shortcuts Manager - handles global keyboard shortcuts.
  * Extracted from App class to provide focused shortcut management.
+ * 
+ * NOTE: hushAudio is optional as Strudel is disabled while app is closed-source.
  */
 
 /**
@@ -17,8 +19,8 @@ export interface ShortcutActions {
     toggleEditorBackdrop: () => void;
     /** Toggle UI visibility */
     toggleUIVisibility: () => void;
-    /** Hush audio (stop Strudel) */
-    hushAudio: () => void;
+    /** Hush audio (stop Strudel) - optional, only when audio is enabled */
+    hushAudio?: () => void;
 }
 
 /**
@@ -113,10 +115,10 @@ export class ShortcutsManager implements IShortcutsManager {
             this.actions.toggleUIVisibility();
         }
 
-        // Ctrl + .: Hush audio (global shortcut)
+        // Ctrl + .: Hush audio (global shortcut) - only if handler is defined
         if (e.ctrlKey && e.key === '.') {
             e.preventDefault();
-            this.actions.hushAudio();
+            this.actions.hushAudio?.();
         }
     }
 }

@@ -4,7 +4,6 @@ import { SystemMenu } from './SystemMenu/SystemMenu';
 import { ErrorOverlay } from './ErrorOverlay';
 import { WelcomeDialog } from './WelcomeDialog';
 import { MouseSonar, type MouseSonarHandle } from './MouseSonar';
-import { PanelTabBar } from './PanelTabBar';
 import { cn } from '@/lib/utils';
 import type { StatusState, AppSettings, ErrorInfo } from '@/types/app.types';
 
@@ -20,10 +19,6 @@ interface OverlayProps {
     onDismissError: () => void;
     onRevertToLastWorking: () => void;
     sonarRef?: RefObject<MouseSonarHandle | null>;
-    // Mobile panel switching
-    isMobile?: boolean;
-    activePanel?: 'textmode' | 'strudel';
-    onSelectPanel?: (panel: 'textmode' | 'strudel') => void;
 }
 
 export function Overlay({
@@ -37,9 +32,6 @@ export function Overlay({
     onDismissError,
     onRevertToLastWorking,
     sonarRef,
-    isMobile = false,
-    activePanel = 'textmode',
-    onSelectPanel,
 }: OverlayProps) {
 
     const [welcomeOpen, setWelcomeOpen] = useState(true);
@@ -50,14 +42,6 @@ export function Overlay({
 
             {/* Mouse Sonar - always rendered for cursor finding */}
             <MouseSonar ref={sonarRef} />
-
-            {/* Mobile tab bar for panel switching */}
-            {isMobile && onSelectPanel && (
-                <PanelTabBar
-                    activePanel={activePanel}
-                    onSelectPanel={onSelectPanel}
-                />
-            )}
 
             {/* Main UI - hidden when welcome modal is open, with smooth transition */}
             <div
