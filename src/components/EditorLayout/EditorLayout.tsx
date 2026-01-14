@@ -106,6 +106,7 @@ export function EditorLayout({
                     <div
                         id="split-resizer"
                         {...resizerProps}
+                        className={`${resizerProps.className} resizer-${isHorizontal ? 'vertical' : 'horizontal'}`}
                         style={{
                             flexShrink: 0,
                             [isHorizontal ? 'width' : 'height']: `${resizerSize}px`,
