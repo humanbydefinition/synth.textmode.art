@@ -1,0 +1,157 @@
+/* ===== MONACO EDITOR CONTAINER ===== */
+/* Unified editor container styling */
+.panel-editor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: auto;
+    /* Fully transparent - no background at all */
+    background: transparent !important;
+    /* Prevent touch gestures from scrolling/zooming */
+    touch-action: none;
+    border: none !important;
+    outline: none !important;
+}
+
+/* ===== iOS ZOOM PREVENTION ===== */
+/* iOS Safari auto-zooms inputs with font-size < 16px. 
+   Monaco uses a hidden textarea for input - we force it to 16px
+   to prevent zoom on focus */
+.monaco-editor .inputarea,
+.monaco-editor textarea,
+.monaco-editor input {
+    font-size: 16px !important;
+    transform: scale(0.875);
+    /* Scale back to approximate original size */
+    transform-origin: left top;
+}
+
+/* ===== HIDE IPAD KEYBOARD WIDGET ===== */
+/* Monaco's built-in keyboard icon for iOS/iPad - redundant for this app */
+.monaco-editor .iPadShowKeyboard {
+    display: none !important;
+}
+
+/* ===== MONACO TRANSPARENT THEME ===== */
+.monaco-editor,
+.monaco-editor .margin,
+.monaco-editor-background,
+.monaco-editor .inputarea.ime-input,
+.monaco-editor .view-lines,
+.monaco-editor .view-line {
+    background: transparent !important;
+}
+
+/* ===== TEXT-ONLY BACKGROUND EFFECT ===== */
+/* 
+ * Background strategy:
+ * - .view-line has PERMANENT 10px text-indent (pushes text right to create shadow safe zone)
+ * - NO padding used (as requested)
+ * - The first span uses a -10px box-shadow to bridge the gap created by indent
+ */
+
+/* Use text-indent to push text right without padding adjustments */
+.monaco-editor .view-line {
+    text-indent: 4px !important;
+}
+
+
+/* Apply dark background only to the text spans themselves */
+.panel-editor.editor-backdrop .monaco-editor .view-line>span {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 0;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+}
+
+/* Extend the first span's background to the left to bridge the indent gap */
+.panel-editor.editor-backdrop .monaco-editor .view-line>span:first-child:not(:empty) {
+    box-shadow: -4px 0 0 0 rgba(0, 0, 0, 0.7);
+}
+
+/* Without backdrop, code text has shadows for readability */
+.panel-editor:not(.editor-backdrop) .monaco-editor .view-line span {
+    text-shadow:
+        0 0 6px rgba(0, 0, 0, 1),
+        0 0 12px rgba(0, 0, 0, 0.95),
+        1px 1px 4px rgba(0, 0, 0, 1),
+        -1px -1px 4px rgba(0, 0, 0, 1),
+        2px 2px 10px rgba(0, 0, 0, 0.9);
+}
+
+/* With backdrop, minimal shadow since background provides contrast */
+.panel-editor.editor-backdrop .monaco-editor .view-line span {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Selection visibility */
+.monaco-editor .selected-text {
+    background: rgba(100, 150, 255, 0.4) !important;
+}
+
+/* Cursor visibility */
+.monaco-editor .cursor {
+    background: rgba(255, 255, 255, 0.95) !important;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+/* Scrollbar styling - hidden */
+.monaco-editor .scrollbar {
+    opacity: 0;
+}
+
+.monaco-editor .scrollbar:hover {
+    opacity: 0.3;
+}
+
+/* Remove Monaco's default blue focus border */
+.monaco-editor,
+.monaco-editor-background,
+.monaco-editor .inputarea.ime-input {
+    outline: none !important;
+    border: none !important;
+}
+
+.monaco-editor.focused {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/* Line numbers styling - match text background if enabled */
+.panel-editor.editor-backdrop .monaco-editor .line-numbers {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 0 !important;
+    /* Explicitly no roundedness */
+    text-align: right;
+    padding-right: 4px;
+    padding-left: 4px;
+    /* Space between number and code - matches Monaco lineDecorationsWidth */
+    border-right: 16px solid transparent;
+    /* Connect background through the Monaco gutter (transparent border allows background-clip: border-box to show) */
+    box-sizing: content-box;
+    background-clip: border-box;
+}
+
+/* Without backdrop, line numbers need readability shadow */
+.panel-editor:not(.editor-backdrop) .monaco-editor .line-numbers {
+    text-shadow:
+        0 0 6px rgba(0, 0, 0, 1),
+        0 0 12px rgba(0, 0, 0, 0.95),
+        1px 1px 4px rgba(0, 0, 0, 1);
+
+    border-radius: 0 !important;
+    /* Explicitly no roundedness */
+    text-align: right;
+    padding-right: 4px;
+    padding-left: 4px;
+    /* Space between number and code - 16px Monaco gutter + 12px view-lines padding */
+    border-right: 28px solid transparent;
+    /* Connect background through the gap (transparent border allows background-clip: border-box to show) */
+    box-sizing: content-box;
+    /* Ensure border adds to visual width without breaking layout */
+    background-clip: border-box;
+}
