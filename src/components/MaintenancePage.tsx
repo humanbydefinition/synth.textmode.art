@@ -1,5 +1,3 @@
-import React from 'react';
-
 const AGPL_TEXT = "AGPL ".repeat(20);
 
 export const MaintenancePage = () => {
