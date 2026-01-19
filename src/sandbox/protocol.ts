@@ -55,9 +55,9 @@ export interface SoftResetMessage {
 export interface AudioDataMessage {
 	type: 'AUDIO_DATA';
 	/** Frequency domain data (0-255 per bin) */
-	fft: number[];
+	fft: number[] | Uint8Array | Float32Array;
 	/** Time domain waveform data (0-255) */
-	waveform: number[];
+	waveform: number[] | Uint8Array | Float32Array;
 	/** Timestamp for synchronization */
 	timestamp: number;
 }

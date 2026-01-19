@@ -3,9 +3,9 @@
  */
 export interface AudioData {
     /** Frequency domain data (0-255 per bin) */
-    fft: number[];
+    fft: Uint8Array;
     /** Time domain waveform data (0-255) */
-    waveform: number[];
+    waveform: Uint8Array;
     /** Timestamp for synchronization */
     timestamp: number;
 }
@@ -113,8 +113,8 @@ export class AudioService {
      */
     getData(): AudioData {
         return {
-            fft: Array.from(this.fftData),
-            waveform: Array.from(this.waveformData),
+            fft: this.fftData.slice(),
+            waveform: this.waveformData.slice(),
             timestamp: performance.now(),
         };
     }

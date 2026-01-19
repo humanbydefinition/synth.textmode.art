@@ -99,8 +99,8 @@ export class TextmodePlugin
 	 */
 	sendAudioData(data: AudioReactiveData): void {
 		this.runtime?.sendAudioData({
-			fft: Array.from(data.fft),
-			waveform: Array.from(data.waveform),
+			fft: data.fft,
+			waveform: data.waveform,
 			timestamp: data.timestamp,
 		});
 	}

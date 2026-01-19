@@ -22,7 +22,7 @@ export interface EditorLayoutProps {
  */
 export function EditorLayout({
     panes,
-    initialSplitRatio = 0.5,
+    initialSplitRatio: _initialSplitRatio = 0.5,
     editorBackdrop = false,
     onPaneReady,
 }: EditorLayoutProps) {

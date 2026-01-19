@@ -3,8 +3,6 @@ import type { ParentToRunnerMessage, AudioDataMessage } from '@/sandbox/protocol
 import { isRunnerMessage } from '@/sandbox/protocol';
 import type { IHostRuntime, HostRuntimeOptions } from '@/sandbox/types';
 import type { CodeError } from '@/types/app.types';
-import type { AudioData } from '@/services/AudioService';
-
 /**
  * TextmodeRuntime - manages the iframe lifecycle and communication from the parent window.
  */
@@ -84,7 +82,7 @@ export class TextmodeRuntime implements IHostRuntime {
 	/**
 	 * Send audio data to iframe for audio-reactive visuals
 	 */
-	sendAudioData(data: AudioData): void {
+	sendAudioData(data: { fft: number[] | Uint8Array | Float32Array; waveform: number[] | Uint8Array | Float32Array; timestamp: number }): void {
 		if (!this._isReady) return;
 
 		const msg: AudioDataMessage = {
