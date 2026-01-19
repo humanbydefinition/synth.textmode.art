@@ -57,8 +57,13 @@ export class App {
 	 * Initialize the application
 	 */
 	async init(): Promise<void> {
-		// Create state store with loaded settings
-		this.storage.loadSettings();
+		// Load settings from storage and apply to store
+		const loadedSettings = this.storage.loadSettings();
+		useAppStore.getState().setSettings(loadedSettings);
+		
+		// Apply layout preferences from loaded settings
+		useAppStore.getState().setEditorOrientation(loadedSettings.editorOrientation);
+		useAppStore.getState().setSplitRatio(loadedSettings.splitRatio);
 
 		// Get all registered plugins
 		const registry = PluginRegistry.getInstance();
@@ -209,6 +214,34 @@ export class App {
 				this.storage.saveSettings(settings);
 				this.editorManager.applySettings(settings);
 				// No need to call render() as components subscribe to settings directly
+			}
+		);
+
+		// Sync editorOrientation UI state to settings for persistence
+		useAppStore.subscribe(
+			(state) => state.editorOrientation,
+			(orientation) => {
+				const currentSettings = useAppStore.getState().settings;
+				if (currentSettings.editorOrientation !== orientation) {
+					useAppStore.getState().setSettings({ 
+						...currentSettings, 
+						editorOrientation: orientation 
+					});
+				}
+			}
+		);
+
+		// Sync splitRatio UI state to settings for persistence
+		useAppStore.subscribe(
+			(state) => state.splitRatio,
+			(ratio) => {
+				const currentSettings = useAppStore.getState().settings;
+				if (currentSettings.splitRatio !== ratio) {
+					useAppStore.getState().setSettings({ 
+						...currentSettings, 
+						splitRatio: ratio 
+					});
+				}
 			}
 		);
 
