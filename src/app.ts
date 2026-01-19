@@ -151,7 +151,7 @@ export class App {
 				get: () => useAppStore.getState().activePanel,
 			},
 			splitRatio: {
-				get: () => 0.5, // TODO: Track this if needed
+				get: () => useAppStore.getState().splitRatio,
 			},
 		});
 

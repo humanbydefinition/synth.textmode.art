@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { useSplitResize } from './useSplitResize';
 import { EditorPane } from './EditorPane';
 
@@ -30,9 +30,8 @@ export function EditorLayout({
     const isMobile = useAppStore((state) => state.isMobile);
     const activePanel = useAppStore((state) => state.activePanel);
     const editorOrientation = useAppStore((state) => state.editorOrientation);
-
-    // Split ratio state
-    const [splitRatio, setSplitRatio] = useState(initialSplitRatio);
+    const splitRatio = useAppStore((state) => state.splitRatio);
+    const setSplitRatio = useAppStore((state) => state.setSplitRatio);
 
     // Split resize hook for desktop mode
     const { resizerProps, containerRef } = useSplitResize({

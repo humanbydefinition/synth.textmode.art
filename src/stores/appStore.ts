@@ -45,6 +45,7 @@ export interface AppState {
     activePanel: string;
     panels: Panel[];
     editorOrientation: 'horizontal' | 'vertical';
+    splitRatio: number;
 
     // --- Actions ---
     setSettings: (settings: AppSettings) => void;
@@ -64,6 +65,7 @@ export interface AppState {
     setActivePanel: (panel: string) => void;
     setPanels: (panels: Panel[]) => void;
     setEditorOrientation: (orientation: 'horizontal' | 'vertical') => void;
+    setSplitRatio: (ratio: number) => void;
 }
 
 // Helper to create initial plugin state
@@ -94,6 +96,7 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     activePanel: '',
     panels: [],
     editorOrientation: 'horizontal',
+    splitRatio: 0.5,
 
     // Actions
     setSettings: (settings) => set({ settings }),
@@ -191,6 +194,7 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     setActivePanel: (activePanel) => set({ activePanel }),
     setPanels: (panels) => set({ panels }),
     setEditorOrientation: (editorOrientation) => set({ editorOrientation }),
+    setSplitRatio: (splitRatio) => set({ splitRatio }),
 })));
 
 /**
