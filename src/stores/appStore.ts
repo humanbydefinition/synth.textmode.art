@@ -45,6 +45,7 @@ export interface AppState {
     activePanel: string;
     panels: Panel[];
     editorOrientation: 'horizontal' | 'vertical';
+    splitRatio: number;
 
     // --- Actions ---
     setSettings: (settings: AppSettings) => void;
@@ -64,6 +65,7 @@ export interface AppState {
     setActivePanel: (panel: string) => void;
     setPanels: (panels: Panel[]) => void;
     setEditorOrientation: (orientation: 'horizontal' | 'vertical') => void;
+    setSplitRatio: (ratio: number) => void;
 }
 
 // Helper to create initial plugin state
@@ -93,7 +95,8 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
     activePanel: '',
     panels: [],
-    editorOrientation: 'horizontal',
+    editorOrientation: DEFAULT_SETTINGS.editorOrientation,
+    splitRatio: DEFAULT_SETTINGS.splitRatio,
 
     // Actions
     setSettings: (settings) => set({ settings }),
@@ -191,10 +194,12 @@ export const useAppStore = create<AppState>()(subscribeWithSelector((set, get) =
     setActivePanel: (activePanel) => set({ activePanel }),
     setPanels: (panels) => set({ panels }),
     setEditorOrientation: (editorOrientation) => set({ editorOrientation }),
+    setSplitRatio: (splitRatio) => set({ splitRatio }),
 })));
 
 /**
  * Initialize app store with window resize listener.
+ * Note: Persistence subscriptions are handled by App.ts (the orchestrator).
  */
 export function initAppStore(): () => void {
     const handleResize = () => {
@@ -208,5 +213,7 @@ export function initAppStore(): () => void {
     window.addEventListener('resize', handleResize);
     handleResize();
 
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+        window.removeEventListener('resize', handleResize);
+    };
 }
