@@ -1,0 +1,4 @@
+## 2024-05-23 - Manual React Root Re-renders
+**Finding:** The `App` class acts as an imperative controller that manually calls `this.root.render()` to update the UI when certain state changes (like active panel or window resize), even though the React components are already subscribed to the Zustand store for these values.
+**Implication:** This causes redundant render cycles (double rendering) and re-creates callback functions passed as props, leading to unnecessary `useEffect` churn in child components. It also led to a bug where closure-captured variables in `getShellProps` became stale because `render()` wasn't called often enough.
+**Guidance:** Avoid manually calling `render()` after the initial mount. Rely on React components subscribing to the store. If a prop must be passed from the controller, ensure it's stable or use a store selector within the component instead.
