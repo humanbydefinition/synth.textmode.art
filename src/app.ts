@@ -53,6 +53,10 @@ export class App {
 		return useAppStore.getState().settings;
 	}
 
+	private handlePaneReady = (paneId: string, container: HTMLElement) => {
+		this.layoutState.paneContainers.set(paneId, container);
+	};
+
 	/**
 	 * Initialize the application
 	 */
@@ -135,7 +139,6 @@ export class App {
 			init: () => { },
 			setActivePanel: (panelId: string) => {
 				useAppStore.getState().setActivePanel(panelId);
-				this.render();
 			},
 			getPluginContainer: (pluginId: string): HTMLElement => {
 				const container = this.layoutState.paneContainers.get(pluginId);
@@ -261,9 +264,8 @@ export class App {
 	 * Get props for the shell UI layer
 	 */
 	private getShellProps() {
-		const errorSource = useAppStore.getState().error?.source;
-
 		const handleRevert = () => {
+			const errorSource = useAppStore.getState().error?.source;
 			if (errorSource) {
 				this.pluginManager?.get(errorSource)?.getController().handleRevertToLastWorking();
 			}
@@ -287,9 +289,7 @@ export class App {
 			createElement(AppShell, {
 				panes: this.paneConfigs,
 				editorBackdrop: this.settings.editorBackdrop,
-				onPaneReady: (paneId: string, container: HTMLElement) => {
-					this.layoutState.paneContainers.set(paneId, container);
-				},
+				onPaneReady: this.handlePaneReady,
 				...this.getShellProps(),
 				sonarRef: this.sonarRef,
 			})
@@ -326,7 +326,6 @@ export class App {
 
 			if (useAppStore.getState().isMobile) {
 				useAppStore.getState().setActivePanel(pluginId);
-				this.render();
 			}
 		}
 	}
