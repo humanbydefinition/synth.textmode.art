@@ -1,0 +1,4 @@
+const targetOrigin = 'https://editor.textmode.art';
+const destination = `${targetOrigin}${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+window.location.replace(destination);
