@@ -2,6 +2,8 @@
 
 Small GitHub Pages redirect site that forwards `https://synth.textmode.art` to `https://editor.textmode.art`.
 
+Join the [textmode.art Discord community](https://discord.gg/sjrw8QXNks) for questions and discussion.
+
 It preserves:
 
 - path
